@@ -18,6 +18,21 @@
 		FECF4772138B52B900E300BC /* LoginAuthenticator.m in Sources */ = {isa = PBXBuildFile; fileRef = FECF4771138B52B900E300BC /* LoginAuthenticator.m */; };
 		FED143E5138B554B009F4B8D /* PlainAuthenticator.m in Sources */ = {isa = PBXBuildFile; fileRef = FED143E4138B554B009F4B8D /* PlainAuthenticator.m */; };
 		FED143E9138B5668009F4B8D /* CramMD5Authenticator.m in Sources */ = {isa = PBXBuildFile; fileRef = FED143E8138B5668009F4B8D /* CramMD5Authenticator.m */; };
+		FEE52828138BEF3A0095DD68 /* ThreadMember.m in Sources */ = {isa = PBXBuildFile; fileRef = FEE52827138BEF3A0095DD68 /* ThreadMember.m */; };
+		FEE5282B138BEFE90095DD68 /* ContentDisposition.m in Sources */ = {isa = PBXBuildFile; fileRef = FEE5282A138BEFE90095DD68 /* ContentDisposition.m */; };
+		FEE5282E138BF0810095DD68 /* Address.m in Sources */ = {isa = PBXBuildFile; fileRef = FEE5282D138BF0810095DD68 /* Address.m */; };
+		FEE52831138BF1190095DD68 /* Envelope.m in Sources */ = {isa = PBXBuildFile; fileRef = FEE52830138BF1190095DD68 /* Envelope.m */; };
+		FEE52834138BF22B0095DD68 /* FetchData.m in Sources */ = {isa = PBXBuildFile; fileRef = FEE52833138BF22B0095DD68 /* FetchData.m */; };
+		FEE52837138BF2D20095DD68 /* StatusData.m in Sources */ = {isa = PBXBuildFile; fileRef = FEE52836138BF2D20095DD68 /* StatusData.m */; };
+		FEE5283A138BF3580095DD68 /* MailboxACLItem.m in Sources */ = {isa = PBXBuildFile; fileRef = FEE52839138BF3580095DD68 /* MailboxACLItem.m */; };
+		FEE5283D138BF3FB0095DD68 /* MailboxQuotaRoot.m in Sources */ = {isa = PBXBuildFile; fileRef = FEE5283C138BF3FA0095DD68 /* MailboxQuotaRoot.m */; };
+		FEE52840138BF4A90095DD68 /* MailboxQuota.m in Sources */ = {isa = PBXBuildFile; fileRef = FEE5283F138BF4A90095DD68 /* MailboxQuota.m */; };
+		FEE52843138BF5390095DD68 /* MailboxList.m in Sources */ = {isa = PBXBuildFile; fileRef = FEE52842138BF5380095DD68 /* MailboxList.m */; };
+		FEE52849138BF5C70095DD68 /* ResponseCode.m in Sources */ = {isa = PBXBuildFile; fileRef = FEE52848138BF5C60095DD68 /* ResponseCode.m */; };
+		FEE5284C138BF6320095DD68 /* ResponseText.m in Sources */ = {isa = PBXBuildFile; fileRef = FEE5284B138BF6320095DD68 /* ResponseText.m */; };
+		FEE5284F138BF6860095DD68 /* TaggedResponse.m in Sources */ = {isa = PBXBuildFile; fileRef = FEE5284E138BF6850095DD68 /* TaggedResponse.m */; };
+		FEE52852138BF6F90095DD68 /* UntaggedResponse.m in Sources */ = {isa = PBXBuildFile; fileRef = FEE52851138BF6F80095DD68 /* UntaggedResponse.m */; };
+		FEE52855138BF7DB0095DD68 /* ContinuationRequest.m in Sources */ = {isa = PBXBuildFile; fileRef = FEE52854138BF7DB0095DD68 /* ContinuationRequest.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -40,6 +55,36 @@
 		FED143E4138B554B009F4B8D /* PlainAuthenticator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PlainAuthenticator.m; sourceTree = "<group>"; };
 		FED143E7138B5668009F4B8D /* CramMD5Authenticator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CramMD5Authenticator.h; sourceTree = "<group>"; };
 		FED143E8138B5668009F4B8D /* CramMD5Authenticator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CramMD5Authenticator.m; sourceTree = "<group>"; };
+		FEE52826138BEF3A0095DD68 /* ThreadMember.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ThreadMember.h; sourceTree = "<group>"; };
+		FEE52827138BEF3A0095DD68 /* ThreadMember.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ThreadMember.m; sourceTree = "<group>"; };
+		FEE52829138BEFE90095DD68 /* ContentDisposition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ContentDisposition.h; sourceTree = "<group>"; };
+		FEE5282A138BEFE90095DD68 /* ContentDisposition.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ContentDisposition.m; sourceTree = "<group>"; };
+		FEE5282C138BF0810095DD68 /* Address.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Address.h; sourceTree = "<group>"; };
+		FEE5282D138BF0810095DD68 /* Address.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Address.m; sourceTree = "<group>"; };
+		FEE5282F138BF1190095DD68 /* Envelope.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Envelope.h; sourceTree = "<group>"; };
+		FEE52830138BF1190095DD68 /* Envelope.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Envelope.m; sourceTree = "<group>"; };
+		FEE52832138BF22B0095DD68 /* FetchData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FetchData.h; sourceTree = "<group>"; };
+		FEE52833138BF22B0095DD68 /* FetchData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FetchData.m; sourceTree = "<group>"; };
+		FEE52835138BF2D10095DD68 /* StatusData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StatusData.h; sourceTree = "<group>"; };
+		FEE52836138BF2D20095DD68 /* StatusData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = StatusData.m; sourceTree = "<group>"; };
+		FEE52838138BF3570095DD68 /* MailboxACLItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MailboxACLItem.h; sourceTree = "<group>"; };
+		FEE52839138BF3580095DD68 /* MailboxACLItem.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MailboxACLItem.m; sourceTree = "<group>"; };
+		FEE5283B138BF3FA0095DD68 /* MailboxQuotaRoot.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MailboxQuotaRoot.h; sourceTree = "<group>"; };
+		FEE5283C138BF3FA0095DD68 /* MailboxQuotaRoot.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MailboxQuotaRoot.m; sourceTree = "<group>"; };
+		FEE5283E138BF4A80095DD68 /* MailboxQuota.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MailboxQuota.h; sourceTree = "<group>"; };
+		FEE5283F138BF4A90095DD68 /* MailboxQuota.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MailboxQuota.m; sourceTree = "<group>"; };
+		FEE52841138BF5380095DD68 /* MailboxList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MailboxList.h; sourceTree = "<group>"; };
+		FEE52842138BF5380095DD68 /* MailboxList.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MailboxList.m; sourceTree = "<group>"; };
+		FEE52847138BF5C60095DD68 /* ResponseCode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ResponseCode.h; sourceTree = "<group>"; };
+		FEE52848138BF5C60095DD68 /* ResponseCode.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ResponseCode.m; sourceTree = "<group>"; };
+		FEE5284A138BF6310095DD68 /* ResponseText.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ResponseText.h; sourceTree = "<group>"; };
+		FEE5284B138BF6320095DD68 /* ResponseText.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ResponseText.m; sourceTree = "<group>"; };
+		FEE5284D138BF6840095DD68 /* TaggedResponse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TaggedResponse.h; sourceTree = "<group>"; };
+		FEE5284E138BF6850095DD68 /* TaggedResponse.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TaggedResponse.m; sourceTree = "<group>"; };
+		FEE52850138BF6F70095DD68 /* UntaggedResponse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UntaggedResponse.h; sourceTree = "<group>"; };
+		FEE52851138BF6F80095DD68 /* UntaggedResponse.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = UntaggedResponse.m; sourceTree = "<group>"; };
+		FEE52853138BF7DA0095DD68 /* ContinuationRequest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ContinuationRequest.h; sourceTree = "<group>"; };
+		FEE52854138BF7DB0095DD68 /* ContinuationRequest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ContinuationRequest.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -98,6 +143,7 @@
 				FE98DB7D138B48FD000923BD /* ReceiverAppDelegate.h */,
 				FE98DB7E138B48FD000923BD /* ReceiverAppDelegate.m */,
 				FE98DB80138B48FD000923BD /* MainWindow.xib */,
+				FEE52824138BEF2A0095DD68 /* Data Structures */,
 				FECF4774138B52C700E300BC /* Authenticators */,
 				FE6288C7138B57B6008EB583 /* Additions */,
 				FE98DB75138B48FD000923BD /* Supporting Files */,
@@ -127,6 +173,43 @@
 				FED143E8138B5668009F4B8D /* CramMD5Authenticator.m */,
 			);
 			name = Authenticators;
+			sourceTree = "<group>";
+		};
+		FEE52824138BEF2A0095DD68 /* Data Structures */ = {
+			isa = PBXGroup;
+			children = (
+				FEE52853138BF7DA0095DD68 /* ContinuationRequest.h */,
+				FEE52854138BF7DB0095DD68 /* ContinuationRequest.m */,
+				FEE52850138BF6F70095DD68 /* UntaggedResponse.h */,
+				FEE52851138BF6F80095DD68 /* UntaggedResponse.m */,
+				FEE5284D138BF6840095DD68 /* TaggedResponse.h */,
+				FEE5284E138BF6850095DD68 /* TaggedResponse.m */,
+				FEE5284A138BF6310095DD68 /* ResponseText.h */,
+				FEE5284B138BF6320095DD68 /* ResponseText.m */,
+				FEE52847138BF5C60095DD68 /* ResponseCode.h */,
+				FEE52848138BF5C60095DD68 /* ResponseCode.m */,
+				FEE52841138BF5380095DD68 /* MailboxList.h */,
+				FEE52842138BF5380095DD68 /* MailboxList.m */,
+				FEE5283E138BF4A80095DD68 /* MailboxQuota.h */,
+				FEE5283F138BF4A90095DD68 /* MailboxQuota.m */,
+				FEE5283B138BF3FA0095DD68 /* MailboxQuotaRoot.h */,
+				FEE5283C138BF3FA0095DD68 /* MailboxQuotaRoot.m */,
+				FEE52838138BF3570095DD68 /* MailboxACLItem.h */,
+				FEE52839138BF3580095DD68 /* MailboxACLItem.m */,
+				FEE52835138BF2D10095DD68 /* StatusData.h */,
+				FEE52836138BF2D20095DD68 /* StatusData.m */,
+				FEE52832138BF22B0095DD68 /* FetchData.h */,
+				FEE52833138BF22B0095DD68 /* FetchData.m */,
+				FEE5282F138BF1190095DD68 /* Envelope.h */,
+				FEE52830138BF1190095DD68 /* Envelope.m */,
+				FEE5282C138BF0810095DD68 /* Address.h */,
+				FEE5282D138BF0810095DD68 /* Address.m */,
+				FEE52829138BEFE90095DD68 /* ContentDisposition.h */,
+				FEE5282A138BEFE90095DD68 /* ContentDisposition.m */,
+				FEE52826138BEF3A0095DD68 /* ThreadMember.h */,
+				FEE52827138BEF3A0095DD68 /* ThreadMember.m */,
+			);
+			name = "Data Structures";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -197,6 +280,21 @@
 				FED143E5138B554B009F4B8D /* PlainAuthenticator.m in Sources */,
 				FED143E9138B5668009F4B8D /* CramMD5Authenticator.m in Sources */,
 				FE6288C5138B57AE008EB583 /* NSString+Additions.m in Sources */,
+				FEE52828138BEF3A0095DD68 /* ThreadMember.m in Sources */,
+				FEE5282B138BEFE90095DD68 /* ContentDisposition.m in Sources */,
+				FEE5282E138BF0810095DD68 /* Address.m in Sources */,
+				FEE52831138BF1190095DD68 /* Envelope.m in Sources */,
+				FEE52834138BF22B0095DD68 /* FetchData.m in Sources */,
+				FEE52837138BF2D20095DD68 /* StatusData.m in Sources */,
+				FEE5283A138BF3580095DD68 /* MailboxACLItem.m in Sources */,
+				FEE5283D138BF3FB0095DD68 /* MailboxQuotaRoot.m in Sources */,
+				FEE52840138BF4A90095DD68 /* MailboxQuota.m in Sources */,
+				FEE52843138BF5390095DD68 /* MailboxList.m in Sources */,
+				FEE52849138BF5C70095DD68 /* ResponseCode.m in Sources */,
+				FEE5284C138BF6320095DD68 /* ResponseText.m in Sources */,
+				FEE5284F138BF6860095DD68 /* TaggedResponse.m in Sources */,
+				FEE52852138BF6F90095DD68 /* UntaggedResponse.m in Sources */,
+				FEE52855138BF7DB0095DD68 /* ContinuationRequest.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
