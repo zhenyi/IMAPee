@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		FE153CD0138C232E003A29DD /* BodyTypeBasic.m in Sources */ = {isa = PBXBuildFile; fileRef = FE153CCF138C232E003A29DD /* BodyTypeBasic.m */; };
+		FE153CD4138C260B003A29DD /* BodyTypeText.m in Sources */ = {isa = PBXBuildFile; fileRef = FE153CD3138C260B003A29DD /* BodyTypeText.m */; };
+		FE153CD7138C2768003A29DD /* BodyTypeMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = FE153CD6138C2768003A29DD /* BodyTypeMessage.m */; };
+		FE153CDA138C2871003A29DD /* BodyTypeMultipart.m in Sources */ = {isa = PBXBuildFile; fileRef = FE153CD9138C2871003A29DD /* BodyTypeMultipart.m */; };
 		FE6288C5138B57AE008EB583 /* NSString+Additions.m in Sources */ = {isa = PBXBuildFile; fileRef = FE6288C4138B57AE008EB583 /* NSString+Additions.m */; };
 		FE98DB6F138B48FD000923BD /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FE98DB6E138B48FD000923BD /* UIKit.framework */; };
 		FE98DB71138B48FD000923BD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FE98DB70138B48FD000923BD /* Foundation.framework */; };
@@ -40,6 +44,14 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		FE153CCE138C232E003A29DD /* BodyTypeBasic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BodyTypeBasic.h; sourceTree = "<group>"; };
+		FE153CCF138C232E003A29DD /* BodyTypeBasic.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BodyTypeBasic.m; sourceTree = "<group>"; };
+		FE153CD2138C260B003A29DD /* BodyTypeText.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BodyTypeText.h; sourceTree = "<group>"; };
+		FE153CD3138C260B003A29DD /* BodyTypeText.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BodyTypeText.m; sourceTree = "<group>"; };
+		FE153CD5138C2768003A29DD /* BodyTypeMessage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BodyTypeMessage.h; sourceTree = "<group>"; };
+		FE153CD6138C2768003A29DD /* BodyTypeMessage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BodyTypeMessage.m; sourceTree = "<group>"; };
+		FE153CD8138C2871003A29DD /* BodyTypeMultipart.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BodyTypeMultipart.h; sourceTree = "<group>"; };
+		FE153CD9138C2871003A29DD /* BodyTypeMultipart.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BodyTypeMultipart.m; sourceTree = "<group>"; };
 		FE6288C3138B57AE008EB583 /* NSString+Additions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+Additions.h"; sourceTree = "<group>"; };
 		FE6288C4138B57AE008EB583 /* NSString+Additions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+Additions.m"; sourceTree = "<group>"; };
 		FE98DB6A138B48FD000923BD /* Receiver.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Receiver.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -113,6 +125,21 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		FE182483138C1F1800FAC547 /* Body Types */ = {
+			isa = PBXGroup;
+			children = (
+				FE153CCE138C232E003A29DD /* BodyTypeBasic.h */,
+				FE153CCF138C232E003A29DD /* BodyTypeBasic.m */,
+				FE153CD2138C260B003A29DD /* BodyTypeText.h */,
+				FE153CD3138C260B003A29DD /* BodyTypeText.m */,
+				FE153CD5138C2768003A29DD /* BodyTypeMessage.h */,
+				FE153CD6138C2768003A29DD /* BodyTypeMessage.m */,
+				FE153CD8138C2871003A29DD /* BodyTypeMultipart.h */,
+				FE153CD9138C2871003A29DD /* BodyTypeMultipart.m */,
+			);
+			name = "Body Types";
+			sourceTree = "<group>";
+		};
 		FE6288C7138B57B6008EB583 /* Additions */ = {
 			isa = PBXGroup;
 			children = (
@@ -157,6 +184,7 @@
 				FE98DB80138B48FD000923BD /* MainWindow.xib */,
 				FE9B7BE5138BFB59004FEFB9 /* IMAPee.h */,
 				FE9B7BE6138BFB59004FEFB9 /* IMAPee.m */,
+				FE182483138C1F1800FAC547 /* Body Types */,
 				FE9B7BE1138BF9FD004FEFB9 /* Data Classes */,
 				FEE52824138BEF2A0095DD68 /* Structs */,
 				FECF4774138B52C700E300BC /* Authenticators */,
@@ -327,6 +355,10 @@
 				FE9B7BE7138BFB59004FEFB9 /* IMAPee.m in Sources */,
 				FE9B7BEA138BFBFF004FEFB9 /* Literal.m in Sources */,
 				FE9B7BED138BFC78004FEFB9 /* MessageSet.m in Sources */,
+				FE153CD0138C232E003A29DD /* BodyTypeBasic.m in Sources */,
+				FE153CD4138C260B003A29DD /* BodyTypeText.m in Sources */,
+				FE153CD7138C2768003A29DD /* BodyTypeMessage.m in Sources */,
+				FE153CDA138C2871003A29DD /* BodyTypeMultipart.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
