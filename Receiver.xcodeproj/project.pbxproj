@@ -12,6 +12,8 @@
 		FE153CD7138C2768003A29DD /* BodyTypeMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = FE153CD6138C2768003A29DD /* BodyTypeMessage.m */; };
 		FE153CDA138C2871003A29DD /* BodyTypeMultipart.m in Sources */ = {isa = PBXBuildFile; fileRef = FE153CD9138C2871003A29DD /* BodyTypeMultipart.m */; };
 		FE6288C5138B57AE008EB583 /* NSString+Additions.m in Sources */ = {isa = PBXBuildFile; fileRef = FE6288C4138B57AE008EB583 /* NSString+Additions.m */; };
+		FE882992138C2AD4001A2B2F /* Token.m in Sources */ = {isa = PBXBuildFile; fileRef = FE882991138C2AD4001A2B2F /* Token.m */; };
+		FE882995138C2B46001A2B2F /* ResponseParser.m in Sources */ = {isa = PBXBuildFile; fileRef = FE882994138C2B46001A2B2F /* ResponseParser.m */; };
 		FE98DB6F138B48FD000923BD /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FE98DB6E138B48FD000923BD /* UIKit.framework */; };
 		FE98DB71138B48FD000923BD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FE98DB70138B48FD000923BD /* Foundation.framework */; };
 		FE98DB73138B48FD000923BD /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FE98DB72138B48FD000923BD /* CoreGraphics.framework */; };
@@ -54,6 +56,10 @@
 		FE153CD9138C2871003A29DD /* BodyTypeMultipart.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BodyTypeMultipart.m; sourceTree = "<group>"; };
 		FE6288C3138B57AE008EB583 /* NSString+Additions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+Additions.h"; sourceTree = "<group>"; };
 		FE6288C4138B57AE008EB583 /* NSString+Additions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+Additions.m"; sourceTree = "<group>"; };
+		FE882990138C2AD4001A2B2F /* Token.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Token.h; sourceTree = "<group>"; };
+		FE882991138C2AD4001A2B2F /* Token.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Token.m; sourceTree = "<group>"; };
+		FE882993138C2B46001A2B2F /* ResponseParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ResponseParser.h; sourceTree = "<group>"; };
+		FE882994138C2B46001A2B2F /* ResponseParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ResponseParser.m; sourceTree = "<group>"; };
 		FE98DB6A138B48FD000923BD /* Receiver.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Receiver.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FE98DB6E138B48FD000923BD /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		FE98DB70138B48FD000923BD /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -149,6 +155,17 @@
 			name = Additions;
 			sourceTree = "<group>";
 		};
+		FE88298E138C2ACA001A2B2F /* Parser */ = {
+			isa = PBXGroup;
+			children = (
+				FE882990138C2AD4001A2B2F /* Token.h */,
+				FE882991138C2AD4001A2B2F /* Token.m */,
+				FE882993138C2B46001A2B2F /* ResponseParser.h */,
+				FE882994138C2B46001A2B2F /* ResponseParser.m */,
+			);
+			name = Parser;
+			sourceTree = "<group>";
+		};
 		FE98DB5F138B48FD000923BD = {
 			isa = PBXGroup;
 			children = (
@@ -184,6 +201,7 @@
 				FE98DB80138B48FD000923BD /* MainWindow.xib */,
 				FE9B7BE5138BFB59004FEFB9 /* IMAPee.h */,
 				FE9B7BE6138BFB59004FEFB9 /* IMAPee.m */,
+				FE88298E138C2ACA001A2B2F /* Parser */,
 				FE182483138C1F1800FAC547 /* Body Types */,
 				FE9B7BE1138BF9FD004FEFB9 /* Data Classes */,
 				FEE52824138BEF2A0095DD68 /* Structs */,
@@ -359,6 +377,8 @@
 				FE153CD4138C260B003A29DD /* BodyTypeText.m in Sources */,
 				FE153CD7138C2768003A29DD /* BodyTypeMessage.m in Sources */,
 				FE153CDA138C2871003A29DD /* BodyTypeMultipart.m in Sources */,
+				FE882992138C2AD4001A2B2F /* Token.m in Sources */,
+				FE882995138C2B46001A2B2F /* ResponseParser.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
