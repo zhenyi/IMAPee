@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		FE6288C5138B57AE008EB583 /* NSString+Additions.m in Sources */ = {isa = PBXBuildFile; fileRef = FE6288C4138B57AE008EB583 /* NSString+Additions.m */; };
 		FE98DB6F138B48FD000923BD /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FE98DB6E138B48FD000923BD /* UIKit.framework */; };
 		FE98DB71138B48FD000923BD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FE98DB70138B48FD000923BD /* Foundation.framework */; };
 		FE98DB73138B48FD000923BD /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FE98DB72138B48FD000923BD /* CoreGraphics.framework */; };
@@ -14,20 +15,31 @@
 		FE98DB7C138B48FD000923BD /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = FE98DB7B138B48FD000923BD /* main.m */; };
 		FE98DB7F138B48FD000923BD /* ReceiverAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = FE98DB7E138B48FD000923BD /* ReceiverAppDelegate.m */; };
 		FE98DB82138B48FD000923BD /* MainWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = FE98DB80138B48FD000923BD /* MainWindow.xib */; };
+		FECF4772138B52B900E300BC /* LoginAuthenticator.m in Sources */ = {isa = PBXBuildFile; fileRef = FECF4771138B52B900E300BC /* LoginAuthenticator.m */; };
+		FED143E5138B554B009F4B8D /* PlainAuthenticator.m in Sources */ = {isa = PBXBuildFile; fileRef = FED143E4138B554B009F4B8D /* PlainAuthenticator.m */; };
+		FED143E9138B5668009F4B8D /* CramMD5Authenticator.m in Sources */ = {isa = PBXBuildFile; fileRef = FED143E8138B5668009F4B8D /* CramMD5Authenticator.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		FE6288C3138B57AE008EB583 /* NSString+Additions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+Additions.h"; sourceTree = "<group>"; };
+		FE6288C4138B57AE008EB583 /* NSString+Additions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+Additions.m"; sourceTree = "<group>"; };
 		FE98DB6A138B48FD000923BD /* Receiver.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Receiver.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FE98DB6E138B48FD000923BD /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		FE98DB70138B48FD000923BD /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		FE98DB72138B48FD000923BD /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
-		FE98DB76138B48FD000923BD /* Receiver-Info.plist */ = {isa = PBXFileReference; path = "Receiver-Info.plist"; sourceTree = "<group>"; };
+		FE98DB76138B48FD000923BD /* Receiver-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Receiver-Info.plist"; sourceTree = "<group>"; };
 		FE98DB78138B48FD000923BD /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		FE98DB7A138B48FD000923BD /* Receiver-Prefix.pch */ = {isa = PBXFileReference; path = "Receiver-Prefix.pch"; sourceTree = "<group>"; };
+		FE98DB7A138B48FD000923BD /* Receiver-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Receiver-Prefix.pch"; sourceTree = "<group>"; };
 		FE98DB7B138B48FD000923BD /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		FE98DB7D138B48FD000923BD /* ReceiverAppDelegate.h */ = {isa = PBXFileReference; path = ReceiverAppDelegate.h; sourceTree = "<group>"; };
+		FE98DB7D138B48FD000923BD /* ReceiverAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ReceiverAppDelegate.h; sourceTree = "<group>"; };
 		FE98DB7E138B48FD000923BD /* ReceiverAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ReceiverAppDelegate.m; sourceTree = "<group>"; };
 		FE98DB81138B48FD000923BD /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainWindow.xib; sourceTree = "<group>"; };
+		FECF4770138B52B900E300BC /* LoginAuthenticator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LoginAuthenticator.h; sourceTree = "<group>"; };
+		FECF4771138B52B900E300BC /* LoginAuthenticator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LoginAuthenticator.m; sourceTree = "<group>"; };
+		FED143E3138B554B009F4B8D /* PlainAuthenticator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlainAuthenticator.h; sourceTree = "<group>"; };
+		FED143E4138B554B009F4B8D /* PlainAuthenticator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PlainAuthenticator.m; sourceTree = "<group>"; };
+		FED143E7138B5668009F4B8D /* CramMD5Authenticator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CramMD5Authenticator.h; sourceTree = "<group>"; };
+		FED143E8138B5668009F4B8D /* CramMD5Authenticator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CramMD5Authenticator.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -44,6 +56,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		FE6288C7138B57B6008EB583 /* Additions */ = {
+			isa = PBXGroup;
+			children = (
+				FE6288C3138B57AE008EB583 /* NSString+Additions.h */,
+				FE6288C4138B57AE008EB583 /* NSString+Additions.m */,
+			);
+			name = Additions;
+			sourceTree = "<group>";
+		};
 		FE98DB5F138B48FD000923BD = {
 			isa = PBXGroup;
 			children = (
@@ -77,6 +98,8 @@
 				FE98DB7D138B48FD000923BD /* ReceiverAppDelegate.h */,
 				FE98DB7E138B48FD000923BD /* ReceiverAppDelegate.m */,
 				FE98DB80138B48FD000923BD /* MainWindow.xib */,
+				FECF4774138B52C700E300BC /* Authenticators */,
+				FE6288C7138B57B6008EB583 /* Additions */,
 				FE98DB75138B48FD000923BD /* Supporting Files */,
 			);
 			path = Receiver;
@@ -91,6 +114,19 @@
 				FE98DB7B138B48FD000923BD /* main.m */,
 			);
 			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		FECF4774138B52C700E300BC /* Authenticators */ = {
+			isa = PBXGroup;
+			children = (
+				FED143E3138B554B009F4B8D /* PlainAuthenticator.h */,
+				FED143E4138B554B009F4B8D /* PlainAuthenticator.m */,
+				FECF4770138B52B900E300BC /* LoginAuthenticator.h */,
+				FECF4771138B52B900E300BC /* LoginAuthenticator.m */,
+				FED143E7138B5668009F4B8D /* CramMD5Authenticator.h */,
+				FED143E8138B5668009F4B8D /* CramMD5Authenticator.m */,
+			);
+			name = Authenticators;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -157,6 +193,10 @@
 			files = (
 				FE98DB7C138B48FD000923BD /* main.m in Sources */,
 				FE98DB7F138B48FD000923BD /* ReceiverAppDelegate.m in Sources */,
+				FECF4772138B52B900E300BC /* LoginAuthenticator.m in Sources */,
+				FED143E5138B554B009F4B8D /* PlainAuthenticator.m in Sources */,
+				FED143E9138B5668009F4B8D /* CramMD5Authenticator.m in Sources */,
+				FE6288C5138B57AE008EB583 /* NSString+Additions.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -261,6 +301,7 @@
 				FE98DB87138B48FD000923BD /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
