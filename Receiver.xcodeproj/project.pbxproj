@@ -1,0 +1,268 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		FE98DB6F138B48FD000923BD /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FE98DB6E138B48FD000923BD /* UIKit.framework */; };
+		FE98DB71138B48FD000923BD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FE98DB70138B48FD000923BD /* Foundation.framework */; };
+		FE98DB73138B48FD000923BD /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FE98DB72138B48FD000923BD /* CoreGraphics.framework */; };
+		FE98DB79138B48FD000923BD /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = FE98DB77138B48FD000923BD /* InfoPlist.strings */; };
+		FE98DB7C138B48FD000923BD /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = FE98DB7B138B48FD000923BD /* main.m */; };
+		FE98DB7F138B48FD000923BD /* ReceiverAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = FE98DB7E138B48FD000923BD /* ReceiverAppDelegate.m */; };
+		FE98DB82138B48FD000923BD /* MainWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = FE98DB80138B48FD000923BD /* MainWindow.xib */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		FE98DB6A138B48FD000923BD /* Receiver.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Receiver.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FE98DB6E138B48FD000923BD /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		FE98DB70138B48FD000923BD /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		FE98DB72138B48FD000923BD /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		FE98DB76138B48FD000923BD /* Receiver-Info.plist */ = {isa = PBXFileReference; path = "Receiver-Info.plist"; sourceTree = "<group>"; };
+		FE98DB78138B48FD000923BD /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		FE98DB7A138B48FD000923BD /* Receiver-Prefix.pch */ = {isa = PBXFileReference; path = "Receiver-Prefix.pch"; sourceTree = "<group>"; };
+		FE98DB7B138B48FD000923BD /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		FE98DB7D138B48FD000923BD /* ReceiverAppDelegate.h */ = {isa = PBXFileReference; path = ReceiverAppDelegate.h; sourceTree = "<group>"; };
+		FE98DB7E138B48FD000923BD /* ReceiverAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ReceiverAppDelegate.m; sourceTree = "<group>"; };
+		FE98DB81138B48FD000923BD /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainWindow.xib; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		FE98DB67138B48FD000923BD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FE98DB6F138B48FD000923BD /* UIKit.framework in Frameworks */,
+				FE98DB71138B48FD000923BD /* Foundation.framework in Frameworks */,
+				FE98DB73138B48FD000923BD /* CoreGraphics.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		FE98DB5F138B48FD000923BD = {
+			isa = PBXGroup;
+			children = (
+				FE98DB74138B48FD000923BD /* Receiver */,
+				FE98DB6D138B48FD000923BD /* Frameworks */,
+				FE98DB6B138B48FD000923BD /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		FE98DB6B138B48FD000923BD /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				FE98DB6A138B48FD000923BD /* Receiver.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		FE98DB6D138B48FD000923BD /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				FE98DB6E138B48FD000923BD /* UIKit.framework */,
+				FE98DB70138B48FD000923BD /* Foundation.framework */,
+				FE98DB72138B48FD000923BD /* CoreGraphics.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		FE98DB74138B48FD000923BD /* Receiver */ = {
+			isa = PBXGroup;
+			children = (
+				FE98DB7D138B48FD000923BD /* ReceiverAppDelegate.h */,
+				FE98DB7E138B48FD000923BD /* ReceiverAppDelegate.m */,
+				FE98DB80138B48FD000923BD /* MainWindow.xib */,
+				FE98DB75138B48FD000923BD /* Supporting Files */,
+			);
+			path = Receiver;
+			sourceTree = "<group>";
+		};
+		FE98DB75138B48FD000923BD /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				FE98DB76138B48FD000923BD /* Receiver-Info.plist */,
+				FE98DB77138B48FD000923BD /* InfoPlist.strings */,
+				FE98DB7A138B48FD000923BD /* Receiver-Prefix.pch */,
+				FE98DB7B138B48FD000923BD /* main.m */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		FE98DB69138B48FD000923BD /* Receiver */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FE98DB85138B48FD000923BD /* Build configuration list for PBXNativeTarget "Receiver" */;
+			buildPhases = (
+				FE98DB66138B48FD000923BD /* Sources */,
+				FE98DB67138B48FD000923BD /* Frameworks */,
+				FE98DB68138B48FD000923BD /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Receiver;
+			productName = Receiver;
+			productReference = FE98DB6A138B48FD000923BD /* Receiver.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		FE98DB61138B48FD000923BD /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				ORGANIZATIONNAME = "And a Dinosaur";
+			};
+			buildConfigurationList = FE98DB64138B48FD000923BD /* Build configuration list for PBXProject "Receiver" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = FE98DB5F138B48FD000923BD;
+			productRefGroup = FE98DB6B138B48FD000923BD /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				FE98DB69138B48FD000923BD /* Receiver */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		FE98DB68138B48FD000923BD /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FE98DB79138B48FD000923BD /* InfoPlist.strings in Resources */,
+				FE98DB82138B48FD000923BD /* MainWindow.xib in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		FE98DB66138B48FD000923BD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FE98DB7C138B48FD000923BD /* main.m in Sources */,
+				FE98DB7F138B48FD000923BD /* ReceiverAppDelegate.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		FE98DB77138B48FD000923BD /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				FE98DB78138B48FD000923BD /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		FE98DB80138B48FD000923BD /* MainWindow.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				FE98DB81138B48FD000923BD /* en */,
+			);
+			name = MainWindow.xib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		FE98DB83138B48FD000923BD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = DEBUG;
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 4.3;
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		FE98DB84138B48FD000923BD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 4.3;
+				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
+				SDKROOT = iphoneos;
+			};
+			name = Release;
+		};
+		FE98DB86138B48FD000923BD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "Receiver/Receiver-Prefix.pch";
+				INFOPLIST_FILE = "Receiver/Receiver-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Debug;
+		};
+		FE98DB87138B48FD000923BD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "Receiver/Receiver-Prefix.pch";
+				INFOPLIST_FILE = "Receiver/Receiver-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				VALIDATE_PRODUCT = YES;
+				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		FE98DB64138B48FD000923BD /* Build configuration list for PBXProject "Receiver" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FE98DB83138B48FD000923BD /* Debug */,
+				FE98DB84138B48FD000923BD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FE98DB85138B48FD000923BD /* Build configuration list for PBXNativeTarget "Receiver" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FE98DB86138B48FD000923BD /* Debug */,
+				FE98DB87138B48FD000923BD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = FE98DB61138B48FD000923BD /* Project object */;
+}
