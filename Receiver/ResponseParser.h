@@ -13,6 +13,8 @@
 #import "TaggedResponse.h"
 #import "ResponseText.h"
 #import "ResponseCode.h"
+#import "FetchData.h"
+#import "MailboxList.h"
 
 @interface ResponseParser : NSObject {
     
@@ -20,7 +22,7 @@
     int pos;
     int lexState;
     Token *token;
-    NSDictionary *flagSymbols;
+    NSMutableDictionary *flagSymbols;
     
 }
 
@@ -28,7 +30,7 @@
 @property (assign)int pos;
 @property (assign) int lexState;
 @property (retain) Token *token;
-@property (copy) NSDictionary *flagSymbols;
+@property (retain) NSMutableDictionary *flagSymbols;
 
 - (id) init;
 - (id) parse:(NSString *)aString;

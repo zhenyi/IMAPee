@@ -143,9 +143,105 @@
     return aToken;
 }
 
+#define MAX_FLAG_COUNT 10000
+
+- (NSArray *) flagList {
+    NSMutableArray *flags = [NSMutableArray array];
+    NSError *error = NULL;
+    NSRegularExpression *bracketRegex = [NSRegularExpression regularExpressionWithPattern:@"\\(([^)]*)\\)"
+                                                                                  options:NSRegularExpressionCaseInsensitive error:&error];
+    if ([bracketRegex numberOfMatchesInString:self.str options:0 range:NSMakeRange(self.pos, [self.str length])]) {
+        NSRange rangeOfFirstMatch = [bracketRegex rangeOfFirstMatchInString:self.str options:0 range:NSMakeRange(self.pos, [self.str length])];
+        self.pos = rangeOfFirstMatch.location + rangeOfFirstMatch.length;
+        NSString *matchedString = [self.str substringWithRange:rangeOfFirstMatch];
+        NSRegularExpression *flagRegex = [NSRegularExpression regularExpressionWithPattern:@"\\\\([^\\x80-\\xff(){ \\x00-\\x1f\\x7f%\"\\\\]+)|([^\\x80-\\xff(){ \\x00-\\x1f\\x7f%*\"\\\\]+)"
+                                                                                   options:0 error:&error];
+        NSArray *matches = [flagRegex matchesInString:matchedString options:0 range:NSMakeRange(0, [matchedString length])];
+        for (NSTextCheckingResult *match in matches) {
+            NSRange flagRange = [match rangeAtIndex:1];
+            NSRange atomRange = [match rangeAtIndex:2];
+            NSString *flag = nil;
+            NSString *atom = nil;
+            if (!NSEqualRanges(flagRange, NSMakeRange(NSNotFound, 0))) {
+                flag = [matchedString substringWithRange:flagRange];
+            }
+            if (!NSEqualRanges(atomRange, NSMakeRange(NSNotFound, 0))) {
+                atom = [matchedString substringWithRange:atomRange];
+            }
+            if (atom) {
+                [flags addObject:atom];
+            } else {
+                NSString *symbol = [flag uppercaseString];
+                [self.flagSymbols setObject:@"YES" forKey:symbol];
+                if ([self.flagSymbols count] > MAX_FLAG_COUNT) {
+                    @throw [NSException exceptionWithName:@"FlagCountError" reason:@"number of flag symbols exceeded" userInfo:nil];
+                }
+                [flags addObject:symbol];
+            }
+        }
+        return flags;
+    } else {
+        [self parseError:@"invalid flag list"];
+        return flags;
+    }
+}
+
+- (NSNumber *) number {
+    Token *aToken = [self lookahead];
+    if (aToken.symbol == T_NIL) {
+        [self shiftToken];
+        return nil;
+    }
+    aToken = [self match:T_NUMBER];
+    return [NSNumber numberWithInt:[aToken.value intValue]];
+}
+
 - (ResponseCode *) responseTextCode {
-    //TODO
-    return nil;
+    self.lexState = EXPR_BEG;
+    [self match:T_LBRA];
+    Token *aToken = [self match:T_ATOM];
+    NSString *aName = [aToken.value uppercaseString];
+    ResponseCode *result = nil;
+    NSError *error = NULL;
+    NSRegularExpression *nilRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:ALERT|PARSE|READ-ONLY|READ-WRITE|TRYCREATE|NOMODSEQ)\\z" 
+                                                                              options:0 error:&error];
+    NSRegularExpression *flagRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:PERMANENTFLAGS)\\z"
+                                                                               options:0 error:&error];
+    NSRegularExpression *numberRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:UIDVALIDITY|UIDNEXT|UNSEEN)\\z"
+                                                                                 options:0 error:&error];
+    if ([nilRegex numberOfMatchesInString:aName options:0 range:NSMakeRange(0, [aName length])]) {
+        result = [[ResponseCode alloc] init];
+        result.name = aName;
+        result.data = nil;
+    } else if ([flagRegex numberOfMatchesInString:aName options:0 range:NSMakeRange(0, [aName length])]) {
+        [self match:T_SPACE];
+        result = [[ResponseCode alloc] init];
+        result.name = aName;
+        result.data = [self flagList];
+    } else if ([numberRegex numberOfMatchesInString:aName options:0 range:NSMakeRange(0, [aName length])]) {
+        [self match:T_SPACE];
+        result = [[ResponseCode alloc] init];
+        result.name = aName;
+        result.data = [self number];
+    } else {
+        aToken = [self lookahead];
+        if (aToken.symbol == T_SPACE) {
+            [self shiftToken];
+            self.lexState = EXPR_CTEXT;
+            aToken = [self match:T_TEXT];
+            self.lexState = EXPR_BEG;
+            result = [[ResponseCode alloc] init];
+            result.name = aName;
+            result.data = aToken.value;
+        } else {
+            result = [[ResponseCode alloc] init];
+            result.name = aName;
+            result.data = nil;
+        }
+    }
+    [self match:T_RBRA];
+    self.lexState = EXPR_RTEXT;
+    return [result autorelease];
 }
 
 - (ResponseText *) responseText {
@@ -172,9 +268,179 @@
     return [request autorelease];
 }
 
-- (UntaggedResponse *) responseUntagged {
+- (NSDictionary *) msgAtt {
     //TODO
     return nil;
+}
+
+- (UntaggedResponse *) numericResponse {
+    NSNumber *n = [self number];
+    [self match:T_SPACE];
+    Token *aToken = [self match:T_ATOM];
+    NSString *aName = [aToken.value uppercaseString];
+    if ([aName isEqualToString:@"EXISTS"] || [aName isEqualToString:@"RECENT"] || [aName isEqualToString:@"EXPUNGE"]) {
+        UntaggedResponse *response = [[UntaggedResponse alloc] init];
+        response.name = aName;
+        response.data = n;
+        response.rawData = self.str;
+        return [response autorelease];
+    } else if ([aName isEqualToString:@"FETCH"]) {
+        [self shiftToken];
+        [self match:T_SPACE];
+        FetchData *data = [[FetchData alloc] init];
+        data.seqno = [n intValue];
+        data.attr = [self msgAtt];
+        UntaggedResponse *response = [[UntaggedResponse alloc] init];
+        response.name = aName;
+        response.data = [data autorelease];
+        response.rawData = self.str;
+        return [response autorelease];
+    } else {
+        return nil;
+    }
+}
+
+- (UntaggedResponse *) responseCond {
+    Token *aToken = [self match:T_ATOM];
+    NSString *aName = [aToken.value uppercaseString];
+    [self match:T_SPACE];
+    UntaggedResponse *response = [[UntaggedResponse alloc] init];
+    response.name = aName;
+    response.data = [self responseText];
+    response.rawData = self.str;
+    return [response autorelease];   
+}
+
+- (UntaggedResponse *) flagsResponse {
+    Token *aToken = [self match:T_ATOM];
+    NSString *aName = [aToken.value uppercaseString];
+    [self match:T_SPACE];
+    UntaggedResponse *response = [[UntaggedResponse alloc] init];
+    response.name = aName;
+    response.data = [self flagList];
+    response.rawData = self.str;
+    return [response autorelease];   
+}
+
+- (MailboxList *) mailboxList {
+    //TODO
+    return nil;
+}
+
+- (UntaggedResponse *) listResponse {
+    Token *aToken = [self match:T_ATOM];
+    NSString *aName = [aToken.value uppercaseString];
+    [self match:T_SPACE];
+    UntaggedResponse *response = [[UntaggedResponse alloc] init];
+    response.name = aName;
+    response.data = [self mailboxList];
+    response.rawData = self.str;
+    return [response autorelease];
+}
+
+- (UntaggedResponse *) getQuotaResponse {
+    //TODO
+    return nil;
+}
+
+- (UntaggedResponse *) getQuotaRootResponse {
+    //TODO
+    return nil;
+}
+
+- (UntaggedResponse *) getAclResponse {
+    //TODO
+    return nil;
+}
+
+- (UntaggedResponse *) searchResponse {
+    //TODO
+    return nil;
+}
+
+- (UntaggedResponse *) threadResponse {
+    //TODO
+    return nil;
+}
+
+- (UntaggedResponse *) statusResponse {
+    //TODO
+    return nil;
+}
+
+- (UntaggedResponse *) capabilityResponse {
+    //TODO
+    return nil;
+}
+
+- (UntaggedResponse *) textResponse {
+    Token *aToken = [self match:T_ATOM];
+    NSString *aName = [aToken.value uppercaseString];
+    [self match:T_SPACE];
+    self.lexState = EXPR_TEXT;
+    aToken = [self match:T_TEXT];
+    self.lexState = EXPR_BEG;
+    UntaggedResponse *response = [[UntaggedResponse alloc] init];
+    response.name = aName;
+    response.data = aToken.value;
+    return [response autorelease];
+}
+
+- (UntaggedResponse *) responseUntagged {
+    [self match:T_STAR];
+    [self match:T_SPACE];
+    Token *aToken = [self lookahead];
+    if (aToken.symbol == T_NUMBER) {
+        return [self numericResponse];
+    } else if (aToken.symbol == T_ATOM) {
+        NSError *error = NULL;
+        NSRegularExpression *condRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:OK|NO|BAD|BYE|PREAUTH)\\z"
+                                                                                   options:NSRegularExpressionCaseInsensitive error:&error];
+        NSRegularExpression *flagsRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:FLAGS)\\z"
+                                                                                    options:NSRegularExpressionCaseInsensitive error:&error];
+        NSRegularExpression *listRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:LIST|LSUB)\\z"
+                                                                                   options:NSRegularExpressionCaseInsensitive error:&error];
+        NSRegularExpression *quotaRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:QUOTA)\\z"
+                                                                                   options:NSRegularExpressionCaseInsensitive error:&error];
+        NSRegularExpression *quotaRootRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:QUOTAROOT)\\z"
+                                                                                    options:NSRegularExpressionCaseInsensitive error:&error];
+        NSRegularExpression *aclRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:ACL)\\z"
+                                                                                        options:NSRegularExpressionCaseInsensitive error:&error];
+        NSRegularExpression *searchRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:SEARCH|SORT)\\z"
+                                                                                  options:NSRegularExpressionCaseInsensitive error:&error];
+        NSRegularExpression *threadRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:THREAD)\\z"
+                                                                                     options:NSRegularExpressionCaseInsensitive error:&error];
+        NSRegularExpression *statusRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:STATUS)\\z"
+                                                                                     options:NSRegularExpressionCaseInsensitive error:&error];
+        NSRegularExpression *capabilityRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:CAPABILITY)\\z"
+                                                                                     options:NSRegularExpressionCaseInsensitive error:&error];
+        if ([condRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
+            return [self responseCond];
+        } else if ([flagsRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
+            return [self flagsResponse];
+        } else if ([listRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
+            return [self listResponse];
+        } else if ([quotaRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
+            return [self getQuotaResponse];
+        } else if ([quotaRootRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
+            return [self getQuotaRootResponse];
+        } else if ([aclRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
+            return [self getAclResponse];
+        } else if ([searchRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
+            return [self searchResponse];
+        } else if ([threadRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
+            return [self threadResponse];
+        } else if ([statusRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
+            return [self statusResponse];
+        } else if ([capabilityRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
+            return [self capabilityResponse];
+        } else {
+            return [self textResponse];
+        }
+    } else {
+        [self parseError:[NSString stringWithFormat:@"unexpected token %@", aToken.symbol]];
+        return nil;
+    }
 }
 
 - (BOOL) isAtomToken:(Token *)aToken {
