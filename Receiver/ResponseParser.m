@@ -8,6 +8,11 @@
 
 #import "ResponseParser.h"
 
+@interface ResponseParser ()
+- (id) body;
+- (NSArray *) bodyExtentions;
+@end
+
 @implementation ResponseParser
 
 @synthesize str;
@@ -554,9 +559,202 @@
     return someString;
 }
 
-- (id) body {
+- (id) bodyType1Part {
     //TODO
     return nil;
+}
+
+- (NSString *) caseInsensitiveString {
+    Token *aToken = [self lookahead];
+    if (aToken.symbol == T_NIL) {
+        [self shiftToken];
+        return nil;
+    }
+    aToken = [self matches:[NSArray arrayWithObjects:[NSNumber numberWithInt:T_QUOTED], [NSNumber numberWithInt:T_LITERAL], nil]];
+    return [aToken.value uppercaseString];
+}
+
+- (NSDictionary *) bodyFldParam {
+    Token *aToken = [self lookahead];
+    if (aToken.symbol == T_NIL) {
+        [self shiftToken];
+        return nil;
+    }
+    [self match:T_LPAR];
+    NSMutableDictionary *param = [NSMutableDictionary dictionary];
+    while (YES) {
+        aToken = [self lookahead];
+        switch (aToken.symbol) {
+            case T_RPAR: {
+                [self shiftToken];
+                break;
+            }
+            case T_SPACE: {
+                [self shiftToken];
+            }
+        }
+        NSString *aName = [self caseInsensitiveString];
+        [self match:T_SPACE];
+        NSString *aVal = [self string];
+        [param setObject:aVal forKey:aName];
+    }
+    return param;
+}
+
+- (ContentDisposition *) bodyFldDsp {
+    Token *aToken = [self lookahead];
+    if (aToken.symbol == T_NIL) {
+        [self shiftToken];
+        return nil;
+    }
+    [self match:T_LPAR];
+    NSString *dspType = [self caseInsensitiveString];
+    [self match:T_SPACE];
+    NSDictionary *param = [self bodyFldParam];
+    [self match:T_RPAR];
+    ContentDisposition *disposition = [[ContentDisposition alloc] init];
+    disposition.dspType = dspType;
+    disposition.param = param;
+    return [disposition autorelease];
+}
+
+- (NSArray *) bodyFldLang {
+    Token *aToken = [self lookahead];
+    if (aToken.symbol == T_LPAR) {
+        [self shiftToken];
+        NSMutableArray *result = [NSMutableArray array];
+        while (YES) {
+            aToken = [self lookahead];
+            switch (aToken.symbol) {
+                case T_RPAR: {
+                    [self shiftToken];
+                    return result;
+                }
+                case T_SPACE: {
+                    [self shiftToken];
+                }
+            }
+            [result addObject:[self caseInsensitiveString]];
+        }
+    } else {
+        NSString *lang = [self nString];
+        if (lang) {
+            return [NSArray arrayWithObject:[lang uppercaseString]];
+        } else {
+            return nil;
+        }
+    }
+}
+
+- (id) bodyExtention {
+    Token *aToken = [self lookahead];
+    switch (aToken.symbol) {
+        case T_LPAR: {
+            [self shiftToken];
+            NSArray *result = [self bodyExtentions];
+            [self match:T_RPAR];
+            return result;
+        }
+        case T_NUMBER: {
+            return [self number];
+        }            
+        default: {
+            return [self nString];
+        }
+    }
+}
+
+- (NSArray *) bodyExtentions {
+    NSMutableArray *result = [NSMutableArray array];
+    Token *aToken = nil;
+    while (YES) {
+        aToken = [self lookahead];
+        switch (aToken.symbol) {
+            case T_RPAR: {
+                return result;
+            }
+            case T_SPACE: {
+                [self shiftToken];
+            }
+        }
+        [result addObject:[self bodyExtention]];
+    }
+}
+
+- (NSArray *) bodyExtMPart {
+    Token *aToken = [self lookahead];
+    if (aToken.symbol == T_SPACE) {
+        [self shiftToken];
+    } else {
+        return nil;
+    }
+    NSDictionary *param = [self bodyFldParam];
+    aToken = [self lookahead];
+    if (aToken.symbol == T_SPACE) {
+        [self shiftToken];
+    } else {
+        return [NSArray arrayWithObject:param];
+    }
+    ContentDisposition *disposition = [self bodyFldDsp];
+    [self match:T_SPACE];
+    NSArray *languages = [self bodyFldLang];
+    aToken = [self lookahead];
+    if (aToken.symbol == T_SPACE) {
+        [self shiftToken];
+    } else {
+        return [NSArray arrayWithObjects:param, disposition, languages, nil];
+    }
+    NSArray *extentions = [self bodyExtentions];
+    return [NSArray arrayWithObjects:param, disposition, languages, extentions, nil];
+}
+
+- (BodyTypeMultipart *) bodyTypeMPart {
+    NSMutableArray *parts = [NSMutableArray array];
+    Token *aToken = nil;
+    while (YES) {
+        aToken = [self lookahead];
+        if (aToken.symbol == T_SPACE) {
+            [self shiftToken];
+            break;
+        }
+        [parts addObject:[self body]];
+    }
+    NSString *mType = @"MULTIPART";
+    NSString *mSubType = [self caseInsensitiveString];
+    NSArray *extArray = [self bodyExtMPart];
+    NSDictionary *param = [extArray objectAtIndex:0];
+    ContentDisposition *disposition = nil;
+    NSArray *languages = nil;
+    NSArray *extentions = nil;
+    if ([extArray count] == 3) {
+        disposition = [extArray objectAtIndex:1];
+        languages = [extArray objectAtIndex:2];
+    }
+    if ([extArray count] == 4) {
+        extentions = [extArray objectAtIndex:3];
+    }
+    return [[[BodyTypeMultipart alloc] initWithMediaType:mType subtype:mSubType parts:parts param:param disposition:disposition languages:languages extentions:extentions] autorelease];
+}
+
+- (id) body {
+    self.lexState = EXPR_DATA;
+    Token *aToken = [self lookahead];
+    id result = nil;
+    if (aToken.symbol == T_NIL) {
+        [self shiftToken];
+        result = nil;
+    } else {
+        [self match:T_LPAR];
+        aToken = [self lookahead];
+        if (aToken.symbol == T_LPAR) {
+            result = [self bodyTypeMPart];
+        } else {
+            result = [self bodyType1Part];
+        }
+        [self match:T_RPAR];
+    }
+    self.lexState = EXPR_BEG;
+    return result;
 }
 
 - (NSDictionary *) bodyData {

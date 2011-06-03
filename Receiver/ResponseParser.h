@@ -21,6 +21,7 @@
 #import "MailboxACLItem.h"
 #import "StatusData.h"
 #import "ThreadMember.h"
+#import "BodyTypeMultipart.h"
 
 @interface ResponseParser : NSObject {
     
