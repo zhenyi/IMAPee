@@ -486,9 +486,96 @@
     return [NSDictionary dictionaryWithObjects:[NSArray arrayWithObject:[self number]] forKeys:[NSArray arrayWithObject:aName]];
 }
 
-- (NSDictionary *) bodyData {
+- (NSString *) formatString:(NSString *)someString {
+    if ([someString isEqualToString:@""]) {
+        return @"\"\"";
+    } else {
+        NSError *error = NULL;
+        NSRegularExpression *literalRegex = [NSRegularExpression regularExpressionWithPattern:@"[\\x80-\\xff\\r\\n]"
+                                                                                      options:0
+                                                                                        error:&error];
+        NSRegularExpression *quotedRegex = [NSRegularExpression regularExpressionWithPattern:@"[(){ \\x00-\\x1f\\x7f%*\"\\\\]"
+                                                                                     options:0
+                                                                                       error:&error];
+        if ([literalRegex numberOfMatchesInString:someString options:0 range:NSMakeRange(0, [someString length])]) {
+            return [NSString stringWithFormat:@"{%d}\r\n%@", [someString length], someString];
+        } else if ([quotedRegex numberOfMatchesInString:someString options:0 range:NSMakeRange(0, [someString length])]) {
+            NSRegularExpression *slashRegex = [NSRegularExpression regularExpressionWithPattern:@"([\"\\\\])"
+                                                                                        options:0
+                                                                                          error:&error];
+            NSString *quotedString = [slashRegex stringByReplacingMatchesInString:someString
+                                                                          options:0
+                                                                            range:NSMakeRange(0, [someString length])
+                                                                     withTemplate:@"\\\\$1"];
+            return [NSString stringWithFormat:@"\"%@\"", quotedString];
+        } else {
+            return someString;
+        }
+    }
+}
+
+- (NSString *) section {
+    NSMutableString *someString = [NSMutableString string];
+    Token *aToken = [self match:T_LBRA];
+    [someString appendString:aToken.value];
+    aToken = [self matches:[NSArray arrayWithObjects:[NSNumber numberWithInt:T_ATOM],
+                            [NSNumber numberWithInt:T_NUMBER],
+                            [NSNumber numberWithInt:T_RBRA],
+                            nil]];
+    if (aToken.symbol == T_RBRA) {
+        [someString appendString:aToken.value];
+        return someString;
+    }
+    [someString appendString:aToken.value];
+    aToken = [self lookahead];
+    if (aToken.symbol == T_SPACE) {
+        [self shiftToken];
+        [someString appendString:aToken.value];
+        aToken = [self match:T_LPAR];
+        [someString appendString:aToken.value];
+        while (YES) {
+            aToken = [self lookahead];
+            switch (aToken.symbol) {
+                case T_RPAR: {
+                    [someString appendString:aToken.value];
+                    [self shiftToken];
+                    break;
+                }
+                case T_SPACE: {
+                    [self shiftToken];
+                    [someString appendString:aToken.value];
+                }
+            }
+            [someString appendString:[self formatString:[self aString]]];
+        }
+    }
+    aToken = [self match:T_RBRA];
+    [someString appendString:aToken.value];
+    return someString;
+}
+
+- (id) body {
     //TODO
     return nil;
+}
+
+- (NSDictionary *) bodyData {
+    Token *aToken = [self match:T_ATOM];
+    NSString *aName = [aToken.value uppercaseString];
+    aToken = [self lookahead];
+    if (aToken.symbol == T_SPACE) {
+        [self shiftToken];
+        return [NSDictionary dictionaryWithObjects:[NSArray arrayWithObject:[self body]] forKeys:[NSArray arrayWithObject:aName]];
+    }
+    aName = [aName stringByAppendingString:[self section]];
+    aToken = [self lookahead];
+    if (aToken.symbol == T_ATOM) {
+        aName = [aName stringByAppendingString:aToken.value];
+        [self shiftToken];
+    }
+    [self match:T_SPACE];
+    NSString *data = [self nString];
+    return [NSDictionary dictionaryWithObjects:[NSArray arrayWithObject:data] forKeys:[NSArray arrayWithObject:aName]];
 }
 
 - (NSDictionary *) uidData {
