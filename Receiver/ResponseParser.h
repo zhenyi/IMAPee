@@ -19,6 +19,8 @@
 #import "MailboxQuota.h"
 #import "MailboxQuotaRoot.h"
 #import "MailboxACLItem.h"
+#import "StatusData.h"
+#import "ThreadMember.h"
 
 @interface ResponseParser : NSObject {
     

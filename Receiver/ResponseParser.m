@@ -722,19 +722,127 @@
     return [response autorelease];
 }
 
+- (ThreadMember *) threadBranch:(Token *)aToken {
+    ThreadMember *rootMember = nil;
+    ThreadMember *lastMember = nil;
+    while (YES) {
+        [self shiftToken];
+        aToken = [self lookahead];
+        switch (aToken.symbol) {
+            case T_NUMBER: {
+                ThreadMember *newMember = [[ThreadMember alloc] init];
+                newMember.seqno = [[self number] intValue];
+                newMember.children = [NSMutableArray array];
+                if (rootMember == nil) {
+                    rootMember = newMember;
+                } else {
+                    [lastMember.children addObject:newMember];
+                }
+                lastMember = newMember;
+            }
+            case T_SPACE: {
+            }
+            case T_LPAR: {
+                if (rootMember == nil) {
+                    ThreadMember *dummyMember = [[ThreadMember alloc] init];
+                    dummyMember.seqno = 0;
+                    dummyMember.children = [NSMutableArray array];
+                    lastMember = rootMember = dummyMember;
+                }
+                [lastMember.children addObject:[self threadBranch:aToken]];
+            }
+            case T_RPAR: {
+                break;
+            }
+        }
+    }
+    return [rootMember autorelease];
+}
+
 - (UntaggedResponse *) threadResponse {
-    //TODO
-    return nil;
+    Token *aToken = [self match:T_ATOM];
+    NSString *aName = [aToken.value uppercaseString];
+    aToken = [self lookahead];
+    NSMutableArray *threads = [NSMutableArray array];
+    if (aToken.symbol == T_SPACE) {
+        while (YES) {
+            [self shiftToken];
+            aToken = [self lookahead];
+            switch (aToken.symbol) {
+                case T_LPAR: {
+                    [threads addObject:[self threadBranch:aToken]];
+                }
+                case T_CRLF: {
+                    break;
+                }
+            }
+        }
+    }
+    UntaggedResponse *response = [[UntaggedResponse alloc] init];
+    response.name = aName;
+    response.data = threads;
+    response.rawData = self.str;
+    return [response autorelease];
 }
 
 - (UntaggedResponse *) statusResponse {
-    //TODO
-    return nil;
+    Token *aToken = [self match:T_ATOM];
+    NSString *aName = [aToken.value uppercaseString];
+    [self match:T_SPACE];
+    NSString *mailbox = [self aString];
+    [self match:T_SPACE];
+    [self match:T_LPAR];
+    NSMutableDictionary *attr = [NSMutableDictionary dictionary];
+    while (YES) {
+        aToken = [self lookahead];
+        switch (aToken.symbol) {
+            case T_RPAR: {
+                [self shiftToken];
+                break;
+            }
+            case T_SPACE: {
+                [self shiftToken];
+            }
+        }
+        aToken = [self match:T_ATOM];
+        NSString *key = [aToken.value uppercaseString];
+        [self match:T_SPACE];
+        NSNumber *val = [self number];
+        [attr setObject:val forKey:key];
+    }
+    StatusData *data = [[StatusData alloc] init];
+    data.mailbox = mailbox;
+    data.attr = attr;
+    UntaggedResponse *response = [[UntaggedResponse alloc] init];
+    response.name = aName;
+    response.data = data;
+    [data release];
+    response.rawData = self.str;
+    return [response autorelease];
 }
 
 - (UntaggedResponse *) capabilityResponse {
-    //TODO
-    return nil;
+    Token *aToken = [self match:T_ATOM];
+    NSString *aName = [aToken.value uppercaseString];
+    [self match:T_SPACE];
+    NSMutableArray *data = [NSMutableArray array];
+    while (YES) {
+        aToken = [self lookahead];
+        switch (aToken.symbol) {
+            case T_CRLF: {
+                break;
+            }
+            case T_SPACE: {
+                [self shiftToken];
+            }
+        }
+        [data addObject:[[self atom] uppercaseString]];
+    }
+    UntaggedResponse *response = [[UntaggedResponse alloc] init];
+    response.name = aName;
+    response.data = data;
+    response.rawData = self.str;
+    return [response autorelease];
 }
 
 - (UntaggedResponse *) textResponse {
