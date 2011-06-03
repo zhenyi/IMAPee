@@ -268,9 +268,117 @@
     return [request autorelease];
 }
 
+- (BOOL) isAtomToken:(Token *)aToken {
+    NSArray *atomTokens = [NSArray arrayWithObjects:[NSNumber numberWithInt:T_ATOM], [NSNumber numberWithInt:T_NUMBER], [NSNumber numberWithInt:T_NIL], [NSNumber numberWithInt:T_LBRA], [NSNumber numberWithInt:T_RBRA], [NSNumber numberWithInt:T_PLUS], nil];
+    return [atomTokens containsObject:[NSNumber numberWithInt:aToken.symbol]];
+}
+
+- (NSString *) atom {
+    NSString *result = @"";
+    while (YES) {
+        Token *aToken = [self lookahead];
+        if ([self isAtomToken:aToken]) {
+            result = [result stringByAppendingString:aToken.value];
+            [self shiftToken];
+        } else {
+            if ([result isEqualToString:@""]) {
+                [self parseError:[NSString stringWithFormat:@"unexpected token %@", [self tokenIdToName:aToken.symbol]]];
+            } else {
+                return result;
+            }
+        }
+    }
+}
+
+- (NSString *) string {
+    Token *aToken = [self lookahead];
+    if (aToken.symbol == T_NIL) {
+        [self shiftToken];
+        return nil;
+    }
+    aToken = [self matches:[NSArray arrayWithObjects:[NSNumber numberWithInt:T_QUOTED], [NSNumber numberWithInt:T_LITERAL], nil]];
+    return aToken.value;
+}
+
+- (BOOL) isStringToken:(Token *)aToken {
+    NSArray *stringTokens = [NSArray arrayWithObjects:[NSNumber numberWithInt:T_QUOTED],
+                             [NSNumber numberWithInt:T_LITERAL],
+                             [NSNumber numberWithInt:T_NIL],
+                             nil];
+    return [stringTokens containsObject:[NSNumber numberWithInt:aToken.symbol]];
+}
+
+- (NSString *) aString {
+    Token *aToken = [self lookahead];
+    if ([self isStringToken:aToken]) {
+        return [self string];
+    } else {
+        return [self atom];
+    }
+}
+
+- (NSString *) nString {
+    Token *aToken = [self lookahead];
+    if (aToken.symbol == T_NIL) {
+        [self shiftToken];
+        return nil;
+    } else {
+        return [self string];
+    }
+}
+
 - (Address *) address {
-    //TODO
-    return nil;
+    [self match:T_LPAR];
+    NSError *error = NULL;
+    NSRegularExpression *addressRegex = [NSRegularExpression regularExpressionWithPattern:@"\\G(?:NIL|\"((?:[^\\x80-\\xff\\x00\\r\\n\"\\\\]|\\\\[\"\\\\])*)\") (?:NIL|\"((?:[^\\x80-\\xff\\x00\\r\\n\"\\\\]|\\\\[\"\\\\])*)\") (?:NIL|\"((?:[^\\x80-\\xff\\x00\\r\\n\"\\\\]|\\\\[\"\\\\])*)\") (?:NIL|\"((?:[^\\x80-\\xff\\x00\\r\\n\"\\\\]|\\\\[\"\\\\])*)\")\\)"
+                                                                                  options:NSRegularExpressionCaseInsensitive
+                                                                                    error:&error];
+    NSTextCheckingResult *match = [addressRegex firstMatchInString:self.str options:0 range:NSMakeRange(self.pos, [self.str length])];
+    NSString *aName = nil;
+    NSString *aRoute = nil;
+    NSString *aMailbox = nil;
+    NSString *aHost = nil;
+    if (match) {
+        self.pos = match.range.location + match.range.length;
+        NSRegularExpression *slashRegex = [NSRegularExpression regularExpressionWithPattern:@"\\\\([\"\\\\])"
+                                                                                    options:0
+                                                                                      error:&error];
+        NSRange nameRange = [match rangeAtIndex:1];
+        NSRange routeRange = [match rangeAtIndex:2];
+        NSRange mailboxRange = [match rangeAtIndex:3];
+        NSRange hostRange = [match rangeAtIndex:4];
+        if (!NSEqualRanges(nameRange, NSMakeRange(NSNotFound, 0))) {
+            aName = [self.str substringWithRange:nameRange];
+            aName = [slashRegex stringByReplacingMatchesInString:aName options:0 range:NSMakeRange(0, [aName length]) withTemplate:@"$1"];
+        }
+        if (!NSEqualRanges(routeRange, NSMakeRange(NSNotFound, 0))) {
+            aRoute = [self.str substringWithRange:routeRange];
+            aRoute = [slashRegex stringByReplacingMatchesInString:aRoute options:0 range:NSMakeRange(0, [aRoute length]) withTemplate:@"$1"];
+        }
+        if (!NSEqualRanges(mailboxRange, NSMakeRange(NSNotFound, 0))) {
+            aMailbox = [self.str substringWithRange:mailboxRange];
+            aMailbox = [slashRegex stringByReplacingMatchesInString:aMailbox options:0 range:NSMakeRange(0, [aMailbox length]) withTemplate:@"$1"];
+        }
+        if (!NSEqualRanges(hostRange, NSMakeRange(NSNotFound, 0))) {
+            aHost = [self.str substringWithRange:hostRange];
+            aHost = [slashRegex stringByReplacingMatchesInString:aHost options:0 range:NSMakeRange(0, [aHost length]) withTemplate:@"$1"];
+        }
+    } else {
+        aName = [self nString];
+        [self match:T_SPACE];
+        aRoute = [self nString];
+        [self match:T_SPACE];
+        aMailbox = [self nString];
+        [self match:T_SPACE];
+        aHost = [self nString];
+        [self match:T_RPAR];
+    }
+    Address *someAddress = [[Address alloc] init];
+    someAddress.name = aName;
+    someAddress.route = aRoute;
+    someAddress.mailbox = aMailbox;
+    someAddress.host = aHost;
+    return [someAddress autorelease];
 }
 
 - (NSArray *) addressList {
@@ -295,26 +403,6 @@
             [result addObject:[self address]];
         }
         return result;
-    }
-}
-
-- (NSString *) string {
-    Token *aToken = [self lookahead];
-    if (aToken.symbol == T_NIL) {
-        [self shiftToken];
-        return nil;
-    }
-    aToken = [self matches:[NSArray arrayWithObjects:[NSNumber numberWithInt:T_QUOTED], [NSNumber numberWithInt:T_LITERAL], nil]];
-    return aToken.value;
-}
-
-- (NSString *) nString {
-    Token *aToken = [self lookahead];
-    if (aToken.symbol == T_NIL) {
-        [self shiftToken];
-        return nil;
-    } else {
-        return [self string];
     }
 }
 
@@ -515,45 +603,6 @@
     response.data = [self flagList];
     response.rawData = self.str;
     return [response autorelease];   
-}
-
-- (BOOL) isAtomToken:(Token *)aToken {
-    NSArray *atomTokens = [NSArray arrayWithObjects:[NSNumber numberWithInt:T_ATOM], [NSNumber numberWithInt:T_NUMBER], [NSNumber numberWithInt:T_NIL], [NSNumber numberWithInt:T_LBRA], [NSNumber numberWithInt:T_RBRA], [NSNumber numberWithInt:T_PLUS], nil];
-    return [atomTokens containsObject:[NSNumber numberWithInt:aToken.symbol]];
-}
-
-- (NSString *) atom {
-    NSString *result = @"";
-    while (YES) {
-        Token *aToken = [self lookahead];
-        if ([self isAtomToken:aToken]) {
-            result = [result stringByAppendingString:aToken.value];
-            [self shiftToken];
-        } else {
-            if ([result isEqualToString:@""]) {
-                [self parseError:[NSString stringWithFormat:@"unexpected token %@", [self tokenIdToName:aToken.symbol]]];
-            } else {
-                return result;
-            }
-        }
-    }
-}
-
-- (BOOL) isStringToken:(Token *)aToken {
-    NSArray *stringTokens = [NSArray arrayWithObjects:[NSNumber numberWithInt:T_QUOTED],
-                             [NSNumber numberWithInt:T_LITERAL],
-                             [NSNumber numberWithInt:T_NIL],
-                             nil];
-    return [stringTokens containsObject:[NSNumber numberWithInt:aToken.symbol]];
-}
-
-- (NSString *) aString {
-    Token *aToken = [self lookahead];
-    if ([self isStringToken:aToken]) {
-        return [self string];
-    } else {
-        return [self atom];
-    }
 }
 
 - (MailboxList *) mailboxList {
