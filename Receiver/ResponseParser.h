@@ -22,6 +22,9 @@
 #import "StatusData.h"
 #import "ThreadMember.h"
 #import "BodyTypeMultipart.h"
+#import "BodyTypeText.h"
+#import "BodyTypeMessage.h"
+#import "BodyTypeBasic.h"
 
 @interface ResponseParser : NSObject {
     

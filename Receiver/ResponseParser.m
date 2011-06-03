@@ -559,11 +559,6 @@
     return someString;
 }
 
-- (id) bodyType1Part {
-    //TODO
-    return nil;
-}
-
 - (NSString *) caseInsensitiveString {
     Token *aToken = [self lookahead];
     if (aToken.symbol == T_NIL) {
@@ -572,6 +567,13 @@
     }
     aToken = [self matches:[NSArray arrayWithObjects:[NSNumber numberWithInt:T_QUOTED], [NSNumber numberWithInt:T_LITERAL], nil]];
     return [aToken.value uppercaseString];
+}
+
+- (NSArray *) mediaType {
+    NSString *mType = [self caseInsensitiveString];
+    [self match:T_SPACE];
+    NSString *mSubType = [self caseInsensitiveString];
+    return [NSArray arrayWithObjects:mType, mSubType, nil];
 }
 
 - (NSDictionary *) bodyFldParam {
@@ -599,6 +601,19 @@
         [param setObject:aVal forKey:aName];
     }
     return param;
+}
+
+- (NSArray *) bodyFields {
+    NSDictionary *param = [self bodyFldParam];
+    [self match:T_SPACE];
+    NSString *contentId = [self nString];
+    [self match:T_SPACE];
+    NSString *desc = [self nString];
+    [self match:T_SPACE];
+    NSString *enc = [self caseInsensitiveString];
+    [self match:T_SPACE];
+    NSNumber *size = [self number];
+    return [NSArray arrayWithObjects:param, contentId, desc, enc, size, nil];
 }
 
 - (ContentDisposition *) bodyFldDsp {
@@ -681,6 +696,161 @@
     }
 }
 
+- (NSArray *) bodyExt1Part {
+    Token *aToken = [self lookahead];
+    if (aToken.symbol == T_SPACE) {
+        [self shiftToken];
+    } else {
+        return nil;
+    }
+    NSString *md5 = [self nString];
+    aToken = [self lookahead];
+    if (aToken.symbol == T_SPACE) {
+        [self shiftToken];
+    } else {
+        return [NSArray arrayWithObject:md5];
+    }
+    ContentDisposition *disposition = [self bodyFldDsp];
+    aToken = [self lookahead];
+    if (aToken.symbol == T_SPACE) {
+        [self shiftToken];
+    } else {
+        return [NSArray arrayWithObjects:md5, disposition, nil];
+    }
+    NSArray *languages = [self bodyFldLang];
+    aToken = [self lookahead];
+    if (aToken.symbol == T_SPACE) {
+        [self shiftToken];
+    } else {
+        return [NSArray arrayWithObjects:md5, disposition, languages, nil];
+    }
+    NSArray *extentions = [self bodyExtentions];
+    return [NSArray arrayWithObjects:md5, disposition, languages, extentions, nil];
+}
+
+- (BodyTypeText *) bodyTypeText {
+    NSArray *mediaType = [self mediaType];
+    NSString *mType = [mediaType objectAtIndex:0];
+    NSString *mSubType = [mediaType objectAtIndex:1];
+    [self match:T_SPACE];
+    NSArray *bodyFields = [self bodyFields];
+    NSDictionary *param = [bodyFields objectAtIndex:0];
+    NSString *contentId = [bodyFields objectAtIndex:1];
+    NSString *desc = [bodyFields objectAtIndex:2];
+    NSString *enc = [bodyFields objectAtIndex:3];
+    NSNumber *size = [bodyFields objectAtIndex:4];
+    [self match:T_SPACE];
+    NSNumber *lines = [self number];
+    NSArray *ext1Part = [self bodyExt1Part];
+    NSString *md5 = nil;
+    ContentDisposition *disposition = nil;
+    NSArray *languages = nil;
+    NSArray *extentions = nil;
+    if ([ext1Part count] > 0) {
+        md5 = [ext1Part objectAtIndex:0];
+    }
+    if ([ext1Part count] > 1) {
+        disposition = [ext1Part objectAtIndex:1];
+    }
+    if ([ext1Part count] > 2) {
+        languages = [ext1Part objectAtIndex:2];
+    }
+    if ([ext1Part count] > 3) {
+        extentions = [ext1Part objectAtIndex:3];
+    }
+    return [[[BodyTypeText alloc] initWithMediaType:mType subtype:mSubType param:param contentId:contentId description:desc encoding:enc size:size lines:lines MD5:md5 disposition:disposition languages:languages extentions:extentions] autorelease];
+}
+
+- (BodyTypeMessage *) bodyTypeMessage {
+    NSArray *mediaType = [self mediaType];
+    NSString *mType = [mediaType objectAtIndex:0];
+    NSString *mSubType = [mediaType objectAtIndex:1];
+    [self match:T_SPACE];
+    NSArray *bodyFields = [self bodyFields];
+    NSDictionary *param = [bodyFields objectAtIndex:0];
+    NSString *contentId = [bodyFields objectAtIndex:1];
+    NSString *desc = [bodyFields objectAtIndex:2];
+    NSString *enc = [bodyFields objectAtIndex:3];
+    NSNumber *size = [bodyFields objectAtIndex:4];
+    [self match:T_SPACE];
+    Envelope *env = [self envelope];
+    [self match:T_SPACE];
+    id b = [self body];
+    [self match:T_SPACE];
+    NSNumber *lines = [self number];
+    NSArray *ext1Part = [self bodyExt1Part];
+    NSString *md5 = nil;
+    ContentDisposition *disposition = nil;
+    NSArray *languages = nil;
+    NSArray *extentions = nil;
+    if ([ext1Part count] > 0) {
+        md5 = [ext1Part objectAtIndex:0];
+    }
+    if ([ext1Part count] > 1) {
+        disposition = [ext1Part objectAtIndex:1];
+    }
+    if ([ext1Part count] > 2) {
+        languages = [ext1Part objectAtIndex:2];
+    }
+    if ([ext1Part count] > 3) {
+        extentions = [ext1Part objectAtIndex:3];
+    }
+    return [[[BodyTypeMessage alloc] initWithMediaType:mType subtype:mSubType param:param contentId:contentId description:desc encoding:enc size:size envelope:env body:b lines:lines MD5:md5 disposition:disposition languages:languages extentions:extentions] autorelease];
+}
+
+- (BodyTypeBasic *) bodyTypeBasic {
+    NSArray *mediaType = [self mediaType];
+    NSString *mType = [mediaType objectAtIndex:0];
+    NSString *mSubType = [mediaType objectAtIndex:1];
+    Token *aToken = [self lookahead];
+    if (aToken.symbol == T_RPAR) {
+        return [[[BodyTypeBasic alloc] initWithMediaType:mType subtype:mSubType] autorelease];
+    }
+    [self match:T_SPACE];
+    NSArray *bodyFields = [self bodyFields];
+    NSDictionary *param = [bodyFields objectAtIndex:0];
+    NSString *contentId = [bodyFields objectAtIndex:1];
+    NSString *desc = [bodyFields objectAtIndex:2];
+    NSString *enc = [bodyFields objectAtIndex:3];
+    NSNumber *size = [bodyFields objectAtIndex:4];
+    NSArray *ext1Part = [self bodyExt1Part];
+    NSString *md5 = nil;
+    ContentDisposition *disposition = nil;
+    NSArray *languages = nil;
+    NSArray *extentions = nil;
+    if ([ext1Part count] > 0) {
+        md5 = [ext1Part objectAtIndex:0];
+    }
+    if ([ext1Part count] > 1) {
+        disposition = [ext1Part objectAtIndex:1];
+    }
+    if ([ext1Part count] > 2) {
+        languages = [ext1Part objectAtIndex:2];
+    }
+    if ([ext1Part count] > 3) {
+        extentions = [ext1Part objectAtIndex:3];
+    }
+    return [[[BodyTypeBasic alloc] initWithMediaType:mType subtype:mSubType param:param contentId:contentId description:desc encoding:enc size:size MD5:md5 disposition:disposition languages:languages extentions:extentions] autorelease];
+}
+
+- (id) bodyType1Part {
+    Token *aToken = [self lookahead];
+    NSError *error = NULL;
+    NSRegularExpression *textRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:TEXT)\\z"
+                                                                               options:NSRegularExpressionCaseInsensitive
+                                                                                 error:&error];
+    NSRegularExpression *messageRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:MESSAGE)\\z"
+                                                                              options:NSRegularExpressionCaseInsensitive
+                                                                                error:&error];
+    if ([textRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
+        return [self bodyTypeText];
+    } else if ([messageRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
+        return [self bodyTypeMessage];
+    } else {
+        return [self bodyTypeBasic];
+    }
+}
+
 - (NSArray *) bodyExtMPart {
     Token *aToken = [self lookahead];
     if (aToken.symbol == T_SPACE) {
@@ -726,11 +896,11 @@
     ContentDisposition *disposition = nil;
     NSArray *languages = nil;
     NSArray *extentions = nil;
-    if ([extArray count] == 3) {
+    if ([extArray count] > 2) {
         disposition = [extArray objectAtIndex:1];
         languages = [extArray objectAtIndex:2];
     }
-    if ([extArray count] == 4) {
+    if ([extArray count] > 3) {
         extentions = [extArray objectAtIndex:3];
     }
     return [[[BodyTypeMultipart alloc] initWithMediaType:mType subtype:mSubType parts:parts param:param disposition:disposition languages:languages extentions:extentions] autorelease];
