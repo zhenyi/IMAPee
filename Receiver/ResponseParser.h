@@ -15,6 +15,7 @@
 #import "ResponseCode.h"
 #import "FetchData.h"
 #import "MailboxList.h"
+#import "Envelope.h"
 
 @interface ResponseParser : NSObject {
     
@@ -33,6 +34,6 @@
 @property (retain) NSMutableDictionary *flagSymbols;
 
 - (id) init;
-- (id) parse:(NSString *)aString;
+- (id) parse:(NSString *)someString;
 
 @end

@@ -268,9 +268,179 @@
     return [request autorelease];
 }
 
-- (NSDictionary *) msgAtt {
+- (NSArray *) addressList {
     //TODO
     return nil;
+}
+
+- (NSString *) string {
+    Token *aToken = [self lookahead];
+    if (aToken.symbol == T_NIL) {
+        [self shiftToken];
+        return nil;
+    }
+    aToken = [self matches:[NSArray arrayWithObjects:[NSNumber numberWithInt:T_QUOTED], [NSNumber numberWithInt:T_LITERAL], nil]];
+    return aToken.value;
+}
+
+- (NSString *) nString {
+    Token *aToken = [self lookahead];
+    if (aToken.symbol == T_NIL) {
+        [self shiftToken];
+        return nil;
+    } else {
+        return [self string];
+    }
+}
+
+- (Envelope *) envelope {
+    self.lexState = EXPR_DATA;
+    Token *aToken = [self lookahead];
+    Envelope *result = nil;
+    if (aToken.symbol == T_NIL) {
+        [self shiftToken];
+        result = nil;
+    } else {
+        [self match:T_LPAR];
+        NSString *date = [self nString];
+        [self match:T_SPACE];
+        NSString *subject = [self nString];
+        [self match:T_SPACE];
+        NSArray *from = [self addressList];
+        [self match:T_SPACE];
+        NSArray *sender = [self addressList];
+        [self match:T_SPACE];
+        NSArray *replyTo = [self addressList];
+        [self match:T_SPACE];
+        NSArray *to = [self addressList];
+        [self match:T_SPACE];
+        NSArray *cc = [self addressList];
+        [self match:T_SPACE];
+        NSArray *bcc = [self addressList];
+        [self match:T_SPACE];
+        NSString *inReplyTo = [self nString];
+        [self match:T_SPACE];
+        NSString *messageId = [self nString];
+        [self match:T_RPAR];
+        result.date = date;
+        result.subject = subject;
+        result.from = from;
+        result.sender = sender;
+        result.replyTo = replyTo;
+        result.to = to;
+        result.cc = cc;
+        result.bcc = bcc;
+        result.inReplyTo = inReplyTo;
+        result.messageId = messageId;
+    }
+    self.lexState = EXPR_BEG;
+    return [result autorelease];
+}
+
+- (NSDictionary *) envelopeData {
+    Token *aToken = [self match:T_ATOM];
+    NSString *aName = [aToken.value uppercaseString];
+    [self match:T_SPACE];
+    return [NSDictionary dictionaryWithObjects:[NSArray arrayWithObject:[self envelope]] forKeys:[NSArray arrayWithObject:aName]];
+}
+
+- (NSDictionary *) flagsData {
+    Token *aToken = [self match:T_ATOM];
+    NSString *aName = [aToken.value uppercaseString];
+    [self match:T_SPACE];
+    return [NSDictionary dictionaryWithObjects:[NSArray arrayWithObject:[self flagList]] forKeys:[NSArray arrayWithObject:aName]];
+}
+
+- (NSDictionary *) internalDateData {
+    Token *aToken = [self match:T_ATOM];
+    NSString *aName = [aToken.value uppercaseString];
+    [self match:T_SPACE];
+    aToken = [self match:T_QUOTED];
+    return [NSDictionary dictionaryWithObjects:[NSArray arrayWithObject:aToken.value] forKeys:[NSArray arrayWithObject:aName]];
+}
+
+- (NSDictionary *) rfc822Text {
+    Token *aToken = [self match:T_ATOM];
+    NSString *aName = [aToken.value uppercaseString];
+    [self match:T_SPACE];
+    return [NSDictionary dictionaryWithObjects:[NSArray arrayWithObject:[self nString]] forKeys:[NSArray arrayWithObject:aName]];
+}
+
+- (NSDictionary *) rfc822Size {
+    Token *aToken = [self match:T_ATOM];
+    NSString *aName = [aToken.value uppercaseString];
+    [self match:T_SPACE];
+    return [NSDictionary dictionaryWithObjects:[NSArray arrayWithObject:[self number]] forKeys:[NSArray arrayWithObject:aName]];
+}
+
+- (NSDictionary *) bodyData {
+    //TODO
+    return nil;
+}
+
+- (NSDictionary *) uidData {
+    Token *aToken = [self match:T_ATOM];
+    NSString *aName = [aToken.value uppercaseString];
+    [self match:T_SPACE];
+    return [NSDictionary dictionaryWithObjects:[NSArray arrayWithObject:[self number]] forKeys:[NSArray arrayWithObject:aName]];
+}
+
+- (NSDictionary *) msgAtt {
+    [self match:T_LPAR];
+    NSDictionary *attr = nil;
+    while (YES) {
+        Token *aToken = [self lookahead];
+        switch (aToken.symbol) {
+            case T_RPAR: {
+                [self shiftToken];
+                break;
+            }
+            case T_SPACE: {
+                [self shiftToken];
+                aToken = [self lookahead];
+            }
+        }
+        NSError *error = NULL;
+        NSRegularExpression *envelopeRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:ENVELOPE)\\z"
+                                                                                       options:NSRegularExpressionCaseInsensitive
+                                                                                         error:&error];
+        NSRegularExpression *flagsRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:FLAGS)\\z"
+                                                                                    options:NSRegularExpressionCaseInsensitive
+                                                                                      error:&error];
+        NSRegularExpression *internalDateRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:INTERNALDATE)\\z"
+                                                                                           options:NSRegularExpressionCaseInsensitive
+                                                                                             error:&error];
+        NSRegularExpression *rfc822TextRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:RFC822(?:\\.HEADER|\\.TEXT)?)\\z"
+                                                                                         options:NSRegularExpressionCaseInsensitive
+                                                                                           error:&error];
+        NSRegularExpression *rfc822SizeRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:RFC822\\.SIZE)\\z"
+                                                                                         options:NSRegularExpressionCaseInsensitive
+                                                                                           error:&error];
+        NSRegularExpression *bodyRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:BODY(?:STRUCTURE)?)\\z"
+                                                                                   options:NSRegularExpressionCaseInsensitive
+                                                                                     error:&error];
+        NSRegularExpression *uidRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:UID)\\z"
+                                                                                  options:NSRegularExpressionCaseInsensitive
+                                                                                    error:&error];
+        if ([envelopeRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
+            attr = [self envelopeData];
+        } else if ([flagsRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
+            attr = [self flagsData];
+        } else if ([internalDateRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
+            attr = [self internalDateData];
+        } else if ([rfc822TextRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
+            attr = [self rfc822Text];
+        } else if ([rfc822SizeRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
+            attr = [self rfc822Size];
+        } else if ([bodyRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
+            attr = [self bodyData];
+        } else if ([uidRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
+            attr = [self uidData];
+        } else {
+            [self parseError:[NSString stringWithFormat:@"unknown attribute %@", aToken.value]];
+        }
+    }
+    return attr;
 }
 
 - (UntaggedResponse *) numericResponse {
@@ -322,9 +492,62 @@
     return [response autorelease];   
 }
 
+- (BOOL) isAtomToken:(Token *)aToken {
+    NSArray *atomTokens = [NSArray arrayWithObjects:[NSNumber numberWithInt:T_ATOM], [NSNumber numberWithInt:T_NUMBER], [NSNumber numberWithInt:T_NIL], [NSNumber numberWithInt:T_LBRA], [NSNumber numberWithInt:T_RBRA], [NSNumber numberWithInt:T_PLUS], nil];
+    return [atomTokens containsObject:[NSNumber numberWithInt:aToken.symbol]];
+}
+
+- (NSString *) atom {
+    NSString *result = @"";
+    while (YES) {
+        Token *aToken = [self lookahead];
+        if ([self isAtomToken:aToken]) {
+            result = [result stringByAppendingString:aToken.value];
+            [self shiftToken];
+        } else {
+            if ([result isEqualToString:@""]) {
+                [self parseError:[NSString stringWithFormat:@"unexpected token %@", [self tokenIdToName:aToken.symbol]]];
+            } else {
+                return result;
+            }
+        }
+    }
+}
+
+- (BOOL) isStringToken:(Token *)aToken {
+    NSArray *stringTokens = [NSArray arrayWithObjects:[NSNumber numberWithInt:T_QUOTED],
+                             [NSNumber numberWithInt:T_LITERAL],
+                             [NSNumber numberWithInt:T_NIL],
+                             nil];
+    return [stringTokens containsObject:[NSNumber numberWithInt:aToken.symbol]];
+}
+
+- (NSString *) aString {
+    Token *aToken = [self lookahead];
+    if ([self isStringToken:aToken]) {
+        return [self string];
+    } else {
+        return [self atom];
+    }
+}
+
 - (MailboxList *) mailboxList {
-    //TODO
-    return nil;
+    NSArray *attr = [self flagList];
+    [self match:T_SPACE];
+    Token *aToken = [self matches:[NSArray arrayWithObjects:[NSNumber numberWithInt:T_QUOTED], [NSNumber numberWithInt:T_NIL], nil]];
+    NSString *delim = nil;
+    if (aToken.symbol == T_NIL) {
+        delim = nil;
+    } else {
+        delim = aToken.value;
+    }
+    [self match:T_SPACE];
+    NSString *aName = [self aString];
+    MailboxList *list = [[MailboxList alloc] init];
+    list.attr = attr;
+    list.delim = delim;
+    list.name = aName;
+    return [list autorelease];
 }
 
 - (UntaggedResponse *) listResponse {
@@ -443,28 +666,6 @@
     }
 }
 
-- (BOOL) isAtomToken:(Token *)aToken {
-    NSArray *atomTokens = [NSArray arrayWithObjects:[NSNumber numberWithInt:T_ATOM], [NSNumber numberWithInt:T_NUMBER], [NSNumber numberWithInt:T_NIL], [NSNumber numberWithInt:T_LBRA], [NSNumber numberWithInt:T_RBRA], [NSNumber numberWithInt:T_PLUS], nil];
-    return [atomTokens containsObject:[NSNumber numberWithInt:aToken.symbol]];
-}
-
-- (NSString *) atom {
-    NSString *result = @"";
-    while (YES) {
-        Token *aToken = [self lookahead];
-        if ([self isAtomToken:aToken]) {
-            result = [result stringByAppendingString:aToken.value];
-            [self shiftToken];
-        } else {
-            if ([result isEqualToString:@""]) {
-                [self parseError:[NSString stringWithFormat:@"unexpected token %@", [self tokenIdToName:aToken.symbol]]];
-            } else {
-                return result;
-            }
-        }
-    }
-}
-
 - (TaggedResponse *) responseTagged {
     NSString *tag = [self atom];
     [self match:T_SPACE];
@@ -501,8 +702,8 @@
     return result;
 }
 
-- (id) parse:(NSString *)aString {
-    self.str = aString;
+- (id) parse:(NSString *)someString {
+    self.str = someString;
     self.pos = 0;
     self.lexState = EXPR_BEG;
     self.token = nil;
