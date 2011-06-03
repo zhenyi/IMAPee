@@ -268,9 +268,34 @@
     return [request autorelease];
 }
 
-- (NSArray *) addressList {
+- (Address *) address {
     //TODO
     return nil;
+}
+
+- (NSArray *) addressList {
+    Token *aToken = [self lookahead];
+    if (aToken.symbol == T_NIL) {
+        [self shiftToken];
+        return nil;
+    } else {
+        NSMutableArray *result = [NSMutableArray array];
+        [self match:T_LPAR];
+        while (YES) {
+            aToken = [self lookahead];
+            switch (aToken.symbol) {
+                case T_RPAR: {
+                    [self shiftToken];
+                    break;
+                }
+                case T_SPACE: {
+                    [self shiftToken];
+                }
+            }
+            [result addObject:[self address]];
+        }
+        return result;
+    }
 }
 
 - (NSString *) string {
@@ -562,23 +587,139 @@
 }
 
 - (UntaggedResponse *) getQuotaResponse {
-    //TODO
-    return nil;
+    Token *aToken = [self match:T_ATOM];
+    NSString *aName = [aToken.value uppercaseString];
+    [self match:T_SPACE];
+    NSString *mailbox = [self aString];
+    [self match:T_SPACE];
+    [self match:T_LPAR];
+    aToken = [self lookahead];
+    switch (aToken.symbol) {
+        case T_RPAR: {
+            [self shiftToken];
+            MailboxQuota *data = [[MailboxQuota alloc] init];
+            data.mailbox = mailbox;
+            UntaggedResponse *response = [[UntaggedResponse alloc] init];
+            response.name = aName;
+            response.data = data;
+            [data release];
+            response.rawData = self.str;
+            return [response autorelease];
+        }
+        case T_ATOM: {
+            [self shiftToken];
+            [self match:T_SPACE];
+            aToken = [self match:T_NUMBER];
+            NSString *usage = aToken.value;
+            [self match:T_SPACE];
+            aToken = [self match:T_NUMBER];
+            NSString *quota = aToken.value;
+            [self match:T_RPAR];
+            MailboxQuota *data = [[MailboxQuota alloc] init];
+            data.mailbox = mailbox;
+            data.usage = [usage intValue];
+            data.quota = [quota intValue];
+            UntaggedResponse *response = [[UntaggedResponse alloc] init];
+            response.name = aName;
+            response.data = data;
+            [data release];
+            response.rawData = self.str;
+            return [response autorelease];
+        }
+        default: {
+            [self parseError:[NSString stringWithFormat:@"unexpected token %@", [self tokenIdToName:aToken.symbol]]];
+            return nil;
+        }
+    }
 }
 
 - (UntaggedResponse *) getQuotaRootResponse {
-    //TODO
-    return nil;
+    Token *aToken = [self match:T_ATOM];
+    NSString *aName = [aToken.value uppercaseString];
+    [self match:T_SPACE];
+    NSString *mailbox = [self aString];
+    NSMutableArray *quotaRoots = [NSMutableArray array];
+    while (YES) {
+        token = [self lookahead];
+        if (aToken.symbol != T_SPACE) {
+            break;
+        }
+        [self shiftToken];
+        [quotaRoots addObject:[self aString]];
+    }
+    MailboxQuotaRoot *data = [[MailboxQuotaRoot alloc] init];
+    data.mailbox = mailbox;
+    data.quotaRoots = quotaRoots;
+    UntaggedResponse *response = [[UntaggedResponse alloc] init];
+    response.name = aName;
+    response.data = data;
+    [data release];
+    response.rawData = self.str;
+    return [response autorelease];
 }
 
 - (UntaggedResponse *) getAclResponse {
-    //TODO
-    return nil;
+    Token *aToken = [self match:T_ATOM];
+    NSString *aName = [aToken.value uppercaseString];
+    [self match:T_SPACE];
+    // NSString *mailbox = [self aString];
+    [self aString];
+    NSMutableArray *data = [NSMutableArray array];
+    aToken = [self lookahead];
+    if (aToken.symbol == T_SPACE) {
+        [self shiftToken];
+        while (YES) {
+            aToken = [self lookahead];
+            switch (aToken.symbol) {
+                case T_CRLF: {
+                    break;
+                }
+                case T_SPACE: {
+                    [self shiftToken];
+                }
+            }
+            NSString *user = [self aString];
+            [self match:T_SPACE];
+            NSString *rights = [self aString];
+            MailboxACLItem *aclItem = [[MailboxACLItem alloc] init];
+            aclItem.user = user;
+            aclItem.rights = rights;
+            [data addObject:aclItem];
+            [aclItem release];
+        }
+    }
+    UntaggedResponse *response = [[UntaggedResponse alloc] init];
+    response.name = aName;
+    response.data = data;
+    response.rawData = self.str;
+    return [response autorelease];
 }
 
 - (UntaggedResponse *) searchResponse {
-    //TODO
-    return nil;
+    Token *aToken = [self match:T_ATOM];
+    NSString *aName = [aToken.value uppercaseString];
+    aToken = [self lookahead];
+    NSMutableArray *data = [NSMutableArray array];
+    if (aToken.symbol == T_SPACE) {
+        [self shiftToken];
+        while (YES) {
+            aToken = [self lookahead];
+            switch (aToken.symbol) {
+                case T_CRLF: {
+                    break;
+                }
+                case T_SPACE: {
+                    [self shiftToken];
+                }
+            }
+            [data addObject:[self number]];
+        }
+    }
+    UntaggedResponse *response = [[UntaggedResponse alloc] init];
+    response.name = aName;
+    response.data = data;
+    response.rawData = self.str;
+    return [response autorelease];
 }
 
 - (UntaggedResponse *) threadResponse {
@@ -661,7 +802,7 @@
             return [self textResponse];
         }
     } else {
-        [self parseError:[NSString stringWithFormat:@"unexpected token %@", aToken.symbol]];
+        [self parseError:[NSString stringWithFormat:@"unexpected token %@", [self tokenIdToName:aToken.symbol]]];
         return nil;
     }
 }

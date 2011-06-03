@@ -16,6 +16,9 @@
 #import "FetchData.h"
 #import "MailboxList.h"
 #import "Envelope.h"
+#import "MailboxQuota.h"
+#import "MailboxQuotaRoot.h"
+#import "MailboxACLItem.h"
 
 @interface ResponseParser : NSObject {
     
