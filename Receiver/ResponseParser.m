@@ -9,6 +9,7 @@
 #import "ResponseParser.h"
 
 @interface ResponseParser ()
+- (Token *) nextToken;
 - (id) body;
 - (NSArray *) bodyExtentions;
 @end
@@ -55,11 +56,6 @@
         self.flagSymbols = [NSDictionary dictionary];
     }
     return self;
-}
-
-- (Token *) nextToken {
-    //TODO
-    return nil;
 }
 
 - (Token *) lookahead {
@@ -1461,6 +1457,372 @@
     self.lexState = EXPR_BEG;
     self.token = nil;
     return [self response];
+}
+
+- (Token *) tokenForBeg {
+    NSError *error = NULL;
+    NSRegularExpression *begRegex = [NSRegularExpression regularExpressionWithPattern:@"\\G(?:( +)|(NIL)(?=[\\x80-\\xff(){ \\x00-\\x1f\\x7f%*\"\\\\\\[\\]+])|(\\d+)(?=[\\x80-\\xff(){ \\x00-\\x1f\\x7f%*\"\\\\\\[\\]+])|([^\\x80-\\xff(){ \\x00-\\x1f\\x7f%*\"\\\\\\[\\]+]+)|\"((?:[^\\x00\\r\\n\"\\\\]|\\\\[\"\\\\])*)\"|(\\()|(\\))|(\\\\)|(\\*)|(\\[)|(\\])|\\{(\\d+)\\}\\r\\n|(\\+)|(%)|(\\r\\n)|(\\z))"
+                                                                                  options:NSRegularExpressionCaseInsensitive
+                                                                                    error:&error];
+    NSTextCheckingResult *match = [begRegex firstMatchInString:self.str options:0 range:NSMakeRange(self.pos, [self.str length])];
+    NSString *spaceString = nil;
+    NSString *nilString = nil;
+    NSString *numberString = nil;
+    NSString *atomString = nil;
+    NSString *quotedString = nil;
+    NSString *lparString = nil;
+    NSString *rparString = nil;
+    NSString *bslashString = nil;
+    NSString *starString = nil;
+    NSString *lbraString = nil;
+    NSString *rbraString = nil;
+    NSString *literalString = nil;
+    NSString *plusString = nil;
+    NSString *percentString = nil;
+    NSString *crlfString = nil;
+    NSString *eofString = nil;
+    if (match) {
+        self.pos = match.range.location + match.range.length;
+        NSRange spaceRange = [match rangeAtIndex:1];
+        NSRange nilRange = [match rangeAtIndex:2];
+        NSRange numberRange = [match rangeAtIndex:3];
+        NSRange atomRange = [match rangeAtIndex:4];
+        NSRange quotedRange = [match rangeAtIndex:5];
+        NSRange lparRange = [match rangeAtIndex:6];
+        NSRange rparRange = [match rangeAtIndex:7];
+        NSRange bslashRange = [match rangeAtIndex:8];
+        NSRange starRange = [match rangeAtIndex:9];
+        NSRange lbraRange = [match rangeAtIndex:10];
+        NSRange rbraRange = [match rangeAtIndex:11];
+        NSRange literalRange = [match rangeAtIndex:12];
+        NSRange plusRange = [match rangeAtIndex:13];
+        NSRange percentRange = [match rangeAtIndex:14];
+        NSRange crlfRange = [match rangeAtIndex:15];
+        NSRange eofRange = [match rangeAtIndex:16];
+        if (!NSEqualRanges(spaceRange, NSMakeRange(NSNotFound, 0))) {
+            spaceString = [self.str substringWithRange:spaceRange];
+        }
+        if (!NSEqualRanges(nilRange, NSMakeRange(NSNotFound, 0))) {
+            nilString = [self.str substringWithRange:nilRange];
+        }
+        if (!NSEqualRanges(numberRange, NSMakeRange(NSNotFound, 0))) {
+            numberString = [self.str substringWithRange:numberRange];
+        }
+        if (!NSEqualRanges(atomRange, NSMakeRange(NSNotFound, 0))) {
+            atomString = [self.str substringWithRange:atomRange];
+        }
+        if (!NSEqualRanges(quotedRange, NSMakeRange(NSNotFound, 0))) {
+            quotedString = [self.str substringWithRange:quotedRange];
+        }
+        if (!NSEqualRanges(lparRange, NSMakeRange(NSNotFound, 0))) {
+            lparString = [self.str substringWithRange:lparRange];
+        }
+        if (!NSEqualRanges(rparRange, NSMakeRange(NSNotFound, 0))) {
+            rparString = [self.str substringWithRange:rparRange];
+        }
+        if (!NSEqualRanges(bslashRange, NSMakeRange(NSNotFound, 0))) {
+            bslashString = [self.str substringWithRange:bslashRange];
+        }
+        if (!NSEqualRanges(starRange, NSMakeRange(NSNotFound, 0))) {
+            starString = [self.str substringWithRange:starRange];
+        }
+        if (!NSEqualRanges(lbraRange, NSMakeRange(NSNotFound, 0))) {
+            lbraString = [self.str substringWithRange:lbraRange];
+        }
+        if (!NSEqualRanges(rbraRange, NSMakeRange(NSNotFound, 0))) {
+            rbraString = [self.str substringWithRange:rbraRange];
+        }
+        if (!NSEqualRanges(literalRange, NSMakeRange(NSNotFound, 0))) {
+            literalString = [self.str substringWithRange:literalRange];
+        }
+        if (!NSEqualRanges(plusRange, NSMakeRange(NSNotFound, 0))) {
+            plusString = [self.str substringWithRange:plusRange];
+        }
+        if (!NSEqualRanges(percentRange, NSMakeRange(NSNotFound, 0))) {
+            percentString = [self.str substringWithRange:percentRange];
+        }
+        if (!NSEqualRanges(crlfRange, NSMakeRange(NSNotFound, 0))) {
+            crlfString = [self.str substringWithRange:crlfRange];
+        }
+        if (!NSEqualRanges(eofRange, NSMakeRange(NSNotFound, 0))) {
+            eofString = [self.str substringWithRange:eofRange];
+        }
+        if (spaceString) {
+            return [[[Token alloc] initWithSymbol:T_SPACE
+                                            value:[self.str substringWithRange:[match rangeAtIndex:([match numberOfRanges] - 1)]]] autorelease];
+        } else if (nilString) {
+            return [[[Token alloc] initWithSymbol:T_NIL
+                                            value:[self.str substringWithRange:[match rangeAtIndex:([match numberOfRanges] - 1)]]] autorelease];
+        } else if (numberString) {
+            return [[[Token alloc] initWithSymbol:T_NUMBER
+                                            value:[self.str substringWithRange:[match rangeAtIndex:([match numberOfRanges] - 1)]]] autorelease];
+        } else if (atomString) {
+            return [[[Token alloc] initWithSymbol:T_ATOM
+                                            value:[self.str substringWithRange:[match rangeAtIndex:([match numberOfRanges] - 1)]]] autorelease];
+        } else if (quotedString) {
+            NSRegularExpression *slashRegex = [NSRegularExpression regularExpressionWithPattern:@"\\\\([\"\\\\])"
+                                                                                        options:0
+                                                                                          error:&error];
+            NSString *lastMatch = [self.str substringWithRange:[match rangeAtIndex:([match numberOfRanges] - 1)]];
+            lastMatch = [slashRegex stringByReplacingMatchesInString:lastMatch options:0 range:NSMakeRange(0, [lastMatch length]) withTemplate:@"$1"];
+            return [[[Token alloc] initWithSymbol:T_QUOTED
+                                            value:lastMatch] autorelease];
+        } else if (lparString) {
+            return [[[Token alloc] initWithSymbol:T_LPAR
+                                            value:[self.str substringWithRange:[match rangeAtIndex:([match numberOfRanges] - 1)]]] autorelease];
+        } else if (rparString) {
+            return [[[Token alloc] initWithSymbol:T_RPAR
+                                            value:[self.str substringWithRange:[match rangeAtIndex:([match numberOfRanges] - 1)]]] autorelease];
+        } else if (bslashString) {
+            return [[[Token alloc] initWithSymbol:T_BSLASH
+                                            value:[self.str substringWithRange:[match rangeAtIndex:([match numberOfRanges] - 1)]]] autorelease];
+        } else if (starString) {
+            return [[[Token alloc] initWithSymbol:T_STAR
+                                            value:[self.str substringWithRange:[match rangeAtIndex:([match numberOfRanges] - 1)]]] autorelease];
+        } else if (lbraString) {
+            return [[[Token alloc] initWithSymbol:T_LBRA
+                                            value:[self.str substringWithRange:[match rangeAtIndex:([match numberOfRanges] - 1)]]] autorelease];
+        } else if (rbraString) {
+            return [[[Token alloc] initWithSymbol:T_RBRA
+                                            value:[self.str substringWithRange:[match rangeAtIndex:([match numberOfRanges] - 1)]]] autorelease];
+        } else if (literalString) {
+            int len = [[self.str substringWithRange:[match rangeAtIndex:([match numberOfRanges] - 1)]] intValue];
+            NSString *val = [self.str substringWithRange:NSMakeRange(self.pos, len)];
+            self.pos += len;
+            return [[[Token alloc] initWithSymbol:T_LITERAL
+                                            value:val] autorelease];
+        } else if (plusString) {
+            return [[[Token alloc] initWithSymbol:T_PLUS
+                                            value:[self.str substringWithRange:[match rangeAtIndex:([match numberOfRanges] - 1)]]] autorelease];
+        } else if (percentString) {
+            return [[[Token alloc] initWithSymbol:T_PERCENT
+                                            value:[self.str substringWithRange:[match rangeAtIndex:([match numberOfRanges] - 1)]]] autorelease];
+        } else if (crlfString) {
+            return [[[Token alloc] initWithSymbol:T_CRLF
+                                            value:[self.str substringWithRange:[match rangeAtIndex:([match numberOfRanges] - 1)]]] autorelease];
+        } else if (eofString) {
+            return [[[Token alloc] initWithSymbol:T_EOF
+                                            value:[self.str substringWithRange:[match rangeAtIndex:([match numberOfRanges] - 1)]]] autorelease];
+        } else {
+            [self parseError:@"[IMAP BUG] BEG_REGEXP is invalid"];
+            return nil;
+        }
+    } else {
+        NSRegularExpression *errorRegex = [NSRegularExpression regularExpressionWithPattern:@"\\S*"
+                                                                                  options:0
+                                                                                    error:&error];
+        NSTextCheckingResult *errorMatch = [errorRegex firstMatchInString:self.str options:0 range:NSMakeRange(self.pos, [self.str length])];
+        [self parseError:[NSString stringWithFormat:@"unknown token - %@", [self.str substringWithRange:[errorMatch range]]]];
+        return nil;
+    }
+}
+
+- (Token *) tokenForData {
+    NSError *error = NULL;
+    NSRegularExpression *dataRegex = [NSRegularExpression regularExpressionWithPattern:@"\\G(?:( )|(NIL)|(\\d+)|\"((?:[^\\x00\\r\\n\"\\\\]|\\\\[\"\\\\])*)\"|\\{(\\d+)\\}\\r\\n|(\\()|(\\)))"
+                                                                              options:NSRegularExpressionCaseInsensitive
+                                                                                error:&error];
+    NSTextCheckingResult *match = [dataRegex firstMatchInString:self.str options:0 range:NSMakeRange(self.pos, [self.str length])];
+    NSString *spaceString = nil;
+    NSString *nilString = nil;
+    NSString *numberString = nil;
+    NSString *quotedString = nil;
+    NSString *literalString = nil;
+    NSString *lparString = nil;
+    NSString *rparString = nil;
+    if (match) {
+        self.pos = match.range.location + match.range.length;
+        NSRange spaceRange = [match rangeAtIndex:1];
+        NSRange nilRange = [match rangeAtIndex:2];
+        NSRange numberRange = [match rangeAtIndex:3];
+        NSRange quotedRange = [match rangeAtIndex:4];
+        NSRange literalRange = [match rangeAtIndex:5];
+        NSRange lparRange = [match rangeAtIndex:6];
+        NSRange rparRange = [match rangeAtIndex:7];
+        if (!NSEqualRanges(spaceRange, NSMakeRange(NSNotFound, 0))) {
+            spaceString = [self.str substringWithRange:spaceRange];
+        }
+        if (!NSEqualRanges(nilRange, NSMakeRange(NSNotFound, 0))) {
+            nilString = [self.str substringWithRange:nilRange];
+        }
+        if (!NSEqualRanges(numberRange, NSMakeRange(NSNotFound, 0))) {
+            numberString = [self.str substringWithRange:numberRange];
+        }
+        if (!NSEqualRanges(quotedRange, NSMakeRange(NSNotFound, 0))) {
+            quotedString = [self.str substringWithRange:quotedRange];
+        }
+        if (!NSEqualRanges(literalRange, NSMakeRange(NSNotFound, 0))) {
+            literalString = [self.str substringWithRange:literalRange];
+        }
+        if (!NSEqualRanges(lparRange, NSMakeRange(NSNotFound, 0))) {
+            lparString = [self.str substringWithRange:lparRange];
+        }
+        if (!NSEqualRanges(rparRange, NSMakeRange(NSNotFound, 0))) {
+            rparString = [self.str substringWithRange:rparRange];
+        }
+        if (spaceString) {
+            return [[[Token alloc] initWithSymbol:T_SPACE
+                                            value:[self.str substringWithRange:[match rangeAtIndex:([match numberOfRanges] - 1)]]] autorelease];
+        } else if (nilString) {
+            return [[[Token alloc] initWithSymbol:T_NIL
+                                            value:[self.str substringWithRange:[match rangeAtIndex:([match numberOfRanges] - 1)]]] autorelease];
+        } else if (numberString) {
+            return [[[Token alloc] initWithSymbol:T_NUMBER
+                                            value:[self.str substringWithRange:[match rangeAtIndex:([match numberOfRanges] - 1)]]] autorelease];
+        } else if (quotedString) {
+            NSRegularExpression *slashRegex = [NSRegularExpression regularExpressionWithPattern:@"\\\\([\"\\\\])"
+                                                                                        options:0
+                                                                                          error:&error];
+            NSString *lastMatch = [self.str substringWithRange:[match rangeAtIndex:([match numberOfRanges] - 1)]];
+            lastMatch = [slashRegex stringByReplacingMatchesInString:lastMatch options:0 range:NSMakeRange(0, [lastMatch length]) withTemplate:@"$1"];
+            return [[[Token alloc] initWithSymbol:T_QUOTED
+                                            value:lastMatch] autorelease];
+        } else if (literalString) {
+            int len = [[self.str substringWithRange:[match rangeAtIndex:([match numberOfRanges] - 1)]] intValue];
+            NSString *val = [self.str substringWithRange:NSMakeRange(self.pos, len)];
+            self.pos += len;
+            return [[[Token alloc] initWithSymbol:T_LITERAL
+                                            value:val] autorelease];
+        } else if (lparString) {
+            return [[[Token alloc] initWithSymbol:T_LPAR
+                                            value:[self.str substringWithRange:[match rangeAtIndex:([match numberOfRanges] - 1)]]] autorelease];
+        } else if (rparString) {
+            return [[[Token alloc] initWithSymbol:T_RPAR
+                                            value:[self.str substringWithRange:[match rangeAtIndex:([match numberOfRanges] - 1)]]] autorelease];
+        } else {
+            [self parseError:@"[IMAP BUG] DATA_REGEXP is invalid"];
+            return nil;
+        }
+    } else {
+        NSRegularExpression *errorRegex = [NSRegularExpression regularExpressionWithPattern:@"\\S*"
+                                                                                    options:0
+                                                                                      error:&error];
+        NSTextCheckingResult *errorMatch = [errorRegex firstMatchInString:self.str options:0 range:NSMakeRange(self.pos, [self.str length])];
+        [self parseError:[NSString stringWithFormat:@"unknown token - %@", [self.str substringWithRange:[errorMatch range]]]];
+        return nil;
+    }
+}
+
+- (Token *) tokenForText {
+    NSError *error = NULL;
+    NSRegularExpression *textRegex = [NSRegularExpression regularExpressionWithPattern:@"\\G(?:([^\\x00\\r\\n]*))"
+                                                                               options:NSRegularExpressionCaseInsensitive
+                                                                                 error:&error];
+    NSTextCheckingResult *match = [textRegex firstMatchInString:self.str options:0 range:NSMakeRange(self.pos, [self.str length])];
+    NSString *textString = nil;
+    if (match) {
+        self.pos = match.range.location + match.range.length;
+        NSRange textRange = [match rangeAtIndex:1];
+        if (!NSEqualRanges(textRange, NSMakeRange(NSNotFound, 0))) {
+            textString = [self.str substringWithRange:textRange];
+        }
+        if (textString) {
+            return [[[Token alloc] initWithSymbol:T_TEXT
+                                            value:[self.str substringWithRange:[match rangeAtIndex:([match numberOfRanges] - 1)]]] autorelease];
+        } else {
+            [self parseError:@"[IMAP BUG] TEXT_REGEXP is invalid"];
+            return nil;
+        }
+    } else {
+        NSRegularExpression *errorRegex = [NSRegularExpression regularExpressionWithPattern:@"\\S*"
+                                                                                    options:0
+                                                                                      error:&error];
+        NSTextCheckingResult *errorMatch = [errorRegex firstMatchInString:self.str options:0 range:NSMakeRange(self.pos, [self.str length])];
+        [self parseError:[NSString stringWithFormat:@"unknown token - %@", [self.str substringWithRange:[errorMatch range]]]];
+        return nil;
+    }
+}
+
+- (Token *) tokenForRText {
+    NSError *error = NULL;
+    NSRegularExpression *rTextRegex = [NSRegularExpression regularExpressionWithPattern:@"\\G(?:(\\[)|([^\\x00\\r\\n]*))"
+                                                                               options:NSRegularExpressionCaseInsensitive
+                                                                                 error:&error];
+    NSTextCheckingResult *match = [rTextRegex firstMatchInString:self.str options:0 range:NSMakeRange(self.pos, [self.str length])];
+    NSString *lbraString = nil;
+    NSString *textString = nil;
+    if (match) {
+        self.pos = match.range.location + match.range.length;
+        NSRange lbraRange = [match rangeAtIndex:1];
+        NSRange textRange = [match rangeAtIndex:2];
+        if (!NSEqualRanges(lbraRange, NSMakeRange(NSNotFound, 0))) {
+            lbraString = [self.str substringWithRange:lbraRange];
+        }
+        if (!NSEqualRanges(textRange, NSMakeRange(NSNotFound, 0))) {
+            textString = [self.str substringWithRange:textRange];
+        }
+        if (lbraString) {
+            return [[[Token alloc] initWithSymbol:T_LBRA
+                                            value:[self.str substringWithRange:[match rangeAtIndex:([match numberOfRanges] - 1)]]] autorelease];
+        } else if (textString) {
+            return [[[Token alloc] initWithSymbol:T_TEXT
+                                            value:[self.str substringWithRange:[match rangeAtIndex:([match numberOfRanges] - 1)]]] autorelease];
+        } else {
+            [self parseError:@"[IMAP BUG] RTEXT_REGEXP is invalid"];
+            return nil;
+        }
+    } else {
+        NSRegularExpression *errorRegex = [NSRegularExpression regularExpressionWithPattern:@"\\S*"
+                                                                                    options:0
+                                                                                      error:&error];
+        NSTextCheckingResult *errorMatch = [errorRegex firstMatchInString:self.str options:0 range:NSMakeRange(self.pos, [self.str length])];
+        [self parseError:[NSString stringWithFormat:@"unknown token - %@", [self.str substringWithRange:[errorMatch range]]]];
+        return nil;
+    }
+}
+
+- (Token *) tokenForCText {
+    NSError *error = NULL;
+    NSRegularExpression *cTextRegex = [NSRegularExpression regularExpressionWithPattern:@"\\G(?:([^\\x00\\r\\n\\]]*))"
+                                                                               options:NSRegularExpressionCaseInsensitive
+                                                                                 error:&error];
+    NSTextCheckingResult *match = [cTextRegex firstMatchInString:self.str options:0 range:NSMakeRange(self.pos, [self.str length])];
+    NSString *textString = nil;
+    if (match) {
+        self.pos = match.range.location + match.range.length;
+        NSRange textRange = [match rangeAtIndex:1];
+        if (!NSEqualRanges(textRange, NSMakeRange(NSNotFound, 0))) {
+            textString = [self.str substringWithRange:textRange];
+        }
+        if (textString) {
+            return [[[Token alloc] initWithSymbol:T_TEXT
+                                            value:[self.str substringWithRange:[match rangeAtIndex:([match numberOfRanges] - 1)]]] autorelease];
+        } else {
+            [self parseError:@"[IMAP BUG] CTEXT_REGEXP is invalid"];
+            return nil;
+        }
+    } else {
+        NSRegularExpression *errorRegex = [NSRegularExpression regularExpressionWithPattern:@"\\S*"
+                                                                                    options:0
+                                                                                      error:&error];
+        NSTextCheckingResult *errorMatch = [errorRegex firstMatchInString:self.str options:0 range:NSMakeRange(self.pos, [self.str length])];
+        [self parseError:[NSString stringWithFormat:@"unknown token - %@", [self.str substringWithRange:[errorMatch range]]]];
+        return nil;
+    }
+}
+
+- (Token *) nextToken {
+    switch (self.lexState) {
+        case EXPR_BEG: {
+            return [self tokenForBeg];
+        }
+        case EXPR_DATA: {
+            return [self tokenForData];
+        }
+        case EXPR_TEXT: {
+            return [self tokenForText];
+        }
+        case EXPR_RTEXT: {
+            return [self tokenForRText];
+        }
+        case EXPR_CTEXT: {
+            return [self tokenForCText];
+        }            
+        default: {
+            [self parseError:[NSString stringWithFormat:@"invalid self.lexState - %d", self.lexState]];
+            return nil;
+        }
+    }
 }
 
 @end
