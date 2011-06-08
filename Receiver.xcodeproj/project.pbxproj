@@ -69,7 +69,7 @@
 		FE98DB7A138B48FD000923BD /* Receiver-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Receiver-Prefix.pch"; sourceTree = "<group>"; };
 		FE98DB7B138B48FD000923BD /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		FE98DB7D138B48FD000923BD /* ReceiverAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ReceiverAppDelegate.h; sourceTree = "<group>"; };
-		FE98DB7E138B48FD000923BD /* ReceiverAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ReceiverAppDelegate.m; sourceTree = "<group>"; };
+		FE98DB7E138B48FD000923BD /* ReceiverAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ReceiverAppDelegate.m; sourceTree = "<group>"; };
 		FE98DB81138B48FD000923BD /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainWindow.xib; sourceTree = "<group>"; };
 		FE9B7BE2138BFAEC004FEFB9 /* RawData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RawData.h; sourceTree = "<group>"; };
 		FE9B7BE3138BFAEC004FEFB9 /* RawData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RawData.m; sourceTree = "<group>"; };
