@@ -10,6 +10,74 @@
 
 @implementation IMAPee
 
+@synthesize responses;
+
+- (TaggedResponse *) sendCommand:(NSString *)cmd, ... {
+    //TODO
+    return nil;
+}
+
+- (TaggedResponse *) sendCommand:(NSString *)cmd withBlock:(void(^)(id))block {
+    //TODO
+    return nil;
+}
+
+- (NSArray *) capability {
+    [self sendCommand:@"CAPABILITY", nil];
+    NSArray *capabilities = [[self.responses objectForKey:@"CAPABILITY"] lastObject];
+    [self.responses removeObjectForKey:@"CAPABILITY"];
+    return capabilities;
+}
+
+- (TaggedResponse *) noop {
+    return [self sendCommand:@"NOOP", nil];
+}
+
+- (TaggedResponse *) logout {
+    return [self sendCommand:@"LOGOUT", nil];
+}
+
+- (TaggedResponse *) login:(NSString *)user password:(NSString *)password {
+    return [self sendCommand:@"LOGIN", user, password, nil];
+}
+
+- (TaggedResponse *) select:(NSString *)mailbox {
+    [self.responses removeAllObjects];
+    return [self sendCommand:@"SELECT", mailbox, nil];
+}
+
+- (TaggedResponse *) examine:(NSString *)mailbox {
+    [self.responses removeAllObjects];
+    return [self sendCommand:@"EXAMINE", mailbox, nil];
+}
+
+- (TaggedResponse *) create:(NSString *)mailbox {
+    return [self sendCommand:@"CREATE", mailbox, nil];
+}
+
+- (TaggedResponse *) delete:(NSString *)mailbox {
+    return [self sendCommand:@"DELETE", mailbox, nil];
+}
+
+- (TaggedResponse *) rename:(NSString *)mailbox to:(NSString *)newName {
+    return [self sendCommand:@"RENAME", mailbox, newName, nil];
+}
+
+- (TaggedResponse *) subscribe:(NSString *)mailbox {
+    return [self sendCommand:@"SUBSCRIBE", mailbox, nil];
+}
+
+- (TaggedResponse *) unsubscribe:(NSString *)mailbox {
+    return [self sendCommand:@"UNSUBSCRIBE", mailbox, nil];
+}
+
+- (NSArray *) list:(NSString *)refName mailbox:(NSString *)mailbox {
+    [self sendCommand:@"LIST", refName, mailbox, nil];
+    NSArray *mailboxes = [self.responses objectForKey:@"LIST"];
+    [self.responses removeObjectForKey:@"LIST"];
+    return mailboxes;
+}
+
 + (NSString *) decodeUTF7:(NSString *)aString {
     NSError *error = NULL;
     NSRegularExpression *decodeUTF7Regex = [NSRegularExpression regularExpressionWithPattern:@"&(.*?)-"

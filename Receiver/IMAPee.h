@@ -8,11 +8,28 @@
 
 #import <Foundation/Foundation.h>
 #import "NSString+Additions.h"
+#import "TaggedResponse.h"
 
 @interface IMAPee : NSObject {
     
+    NSMutableDictionary *responses;
+    
 }
 
+@property (retain) NSMutableDictionary *responses;
+
+- (NSArray *) capability;
+- (TaggedResponse *) noop;
+- (TaggedResponse *) logout;
+- (TaggedResponse *) login:(NSString *)user password:(NSString *)password;
+- (TaggedResponse *) select:(NSString *)mailbox;
+- (TaggedResponse *) examine:(NSString *)mailbox;
+- (TaggedResponse *) create:(NSString *)mailbox;
+- (TaggedResponse *) delete:(NSString *)mailbox;
+- (TaggedResponse *) rename:(NSString *)mailbox to:(NSString *)newName;
+- (TaggedResponse *) subscribe:(NSString *)mailbox;
+- (TaggedResponse *) unsubscribe:(NSString *)mailbox;
+- (NSArray *) list:(NSString *)refName mailbox:(NSString *)mailbox;
 + (NSString *) decodeUTF7:(NSString *)aString;
 + (NSString *) encodeUTF7:(NSString *)aString;
 + (NSString *) formatDate:(NSDate *)someDate;
@@ -23,17 +40,13 @@
  add_response_handler
  append
  authenticate
- capability
  check
  close
  copy
- create
  debug
  debug=
- delete
  disconnect
  disconnected?
- examine
  expunge
  fetch
  getacl
@@ -41,25 +54,18 @@
  getquotaroot
  idle
  idle_done
- list
- login
- logout
  lsub
  max_flag_count
  max_flag_count=
  new
- noop
  remove_response_handler
- rename
  search
- select
  setacl
  setquota
  sort
  starttls
  status
  store
- subscribe
  thread
  uid_copy
  uid_fetch
@@ -67,7 +73,6 @@
  uid_sort
  uid_store
  uid_thread
- unsubscribe
 */
 
 @end
