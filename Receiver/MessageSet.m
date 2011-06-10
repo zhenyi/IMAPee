@@ -12,9 +12,9 @@
 
 @synthesize data;
 
-- (id) initWithData:(NSString *)aData {
+- (id) initWithSomeData:(NSString *)someData {
     if ((self = [super init])) {
-        self.data = aData;
+        self.data = someData;
     }
     return self;
 }

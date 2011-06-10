@@ -9,6 +9,8 @@
 #import <Foundation/Foundation.h>
 #import "IMAPee.h"
 
+@class IMAPee;
+
 @interface RawData : NSObject {
     
     NSString *data;
@@ -17,7 +19,7 @@
 
 @property (copy) NSString *data;
 
-- (id) initWithData:(NSString *)aData;
+- (id) initWithSomeData:(NSString *)someData;
 - (void) sendData:(IMAPee *)imap;
 - (void) validate;
 

@@ -10,7 +10,21 @@
 
 @implementation IMAPee
 
+@synthesize host, port;
+@synthesize tagPrefix, tagNo;
+@synthesize useSSL;
+@synthesize parser;
 @synthesize responses;
+@synthesize taggedResponses;
+@synthesize responseHandlers;
+@synthesize logoutCommandTag;
+@synthesize exception;
+@synthesize greeting;
+
+- (TaggedResponse *) sendCommand:(NSString *)cmd withArray:(NSArray *)argList {
+    //TODO
+    return nil;
+}
 
 - (TaggedResponse *) sendCommand:(NSString *)cmd, ... {
     //TODO
@@ -20,6 +34,56 @@
 - (TaggedResponse *) sendCommand:(NSString *)cmd withBlock:(void(^)(id))block {
     //TODO
     return nil;
+}
+
+- (void) startTLSSession {
+    //TODO
+}
+
+- (id) getResponse {
+    //TODO
+    return nil;
+}
+
+- (void) receiveResponses {
+    //TODO
+}
+
+- (id) initWithHost:(NSString *)aHost port:(int)aPort useSSL:(BOOL)isUsingSSL {
+    if ((self = [super init])) {
+        self.host = aHost;
+        if (port) {
+            self.port = port;
+        } else {
+            self.port = isUsingSSL ? 993 : 143;
+        }
+        self.tagPrefix = @"PEE";
+        self.tagNo = 0;
+        self.parser = [[ResponseParser alloc] init];
+        //TODO: sock open
+        if (isUsingSSL) {
+            [self startTLSSession];
+            self.useSSL = YES;
+        } else {
+            self.useSSL = NO;
+        }
+        self.responses = [NSMutableDictionary dictionary];
+        self.taggedResponses = [NSMutableDictionary dictionary];
+        self.responseHandlers = [NSMutableArray array];
+        self.logoutCommandTag = nil;
+        self.exception = nil;
+        self.greeting = [self getResponse];
+        if ([greeting.name isEqualToString:@"BYE"]) {
+            //TODO: close sock
+            @throw [NSException exceptionWithName:@"ByeResponseError" reason:self.greeting.data.text userInfo:nil];
+        }
+        @try {
+            [self receiveResponses];
+        }
+        @catch (NSException *exception) {
+        }
+    }
+    return self;
 }
 
 - (NSArray *) capability {
@@ -55,7 +119,7 @@
     return [self sendCommand:@"CREATE", mailbox, nil];
 }
 
-- (TaggedResponse *) delete:(NSString *)mailbox {
+- (TaggedResponse *) del:(NSString *)mailbox {
     return [self sendCommand:@"DELETE", mailbox, nil];
 }
 
@@ -76,6 +140,118 @@
     NSArray *mailboxes = [self.responses objectForKey:@"LIST"];
     [self.responses removeObjectForKey:@"LIST"];
     return mailboxes;
+}
+
+- (NSArray *) getQuotaRoot:(NSString *)mailbox {
+    [self sendCommand:@"GETQUOTAROOT", mailbox, nil];
+    NSMutableArray *result = [NSMutableArray array];
+    [result addObjectsFromArray:[self.responses objectForKey:@"QUOTAROOT"]];
+    [result addObjectsFromArray:[self.responses objectForKey:@"QUOTA"]];
+    [self.responses removeObjectForKey:@"QUOTAROOT"];
+    [self.responses removeObjectForKey:@"QUOTA"];
+    return result;
+}
+
+- (NSArray *) getQuota:(NSString *)mailbox {
+    [self sendCommand:@"GETQUOTA", mailbox, nil];
+    NSArray *quota = [self.responses objectForKey:@"QUOTA"];
+    [self.responses removeObjectForKey:@"QUOTA"];
+    return quota;
+}
+
+- (TaggedResponse *) setQuota:(NSString *)mailbox quota:(NSString *)quota {
+    NSString *data = nil;
+    if (quota == nil) {
+        data = @"()";
+    } else {
+        data = [NSString stringWithFormat:@"(STORAGE %@)", quota];
+    }
+    return [self sendCommand:@"SETQUOTA", mailbox, [[[RawData alloc] initWithSomeData:data] autorelease], nil];
+}
+
+- (TaggedResponse *) setACL:(NSString *)mailbox user:(NSString *)user rights:(NSString *)rights {
+    if (rights == nil) {
+        return [self sendCommand:@"SETACL", mailbox, user, @"", nil];
+    } else {
+        return [self sendCommand:@"SETACL", mailbox, user, rights, nil];
+    }
+}
+
+- (NSArray *) getACL:(NSString *)mailbox {
+    [self sendCommand:@"GETACL", mailbox, nil];
+    NSArray *ACLItems = [[self.responses objectForKey:@"ACL"] lastObject];
+    [self.responses removeObjectForKey:@"ACL"];
+    return ACLItems;
+}
+
+- (NSArray *) lsub:(NSString *)refName mailbox:(NSString *)mailbox {
+    [self sendCommand:@"LSUB", refName, mailbox, nil];
+    NSArray *mailboxes = [self.responses objectForKey:@"LSUB"];
+    [self.responses removeObjectForKey:@"LSUB"];
+    return mailboxes;
+}
+
+- (NSDictionary *) status:(NSString *)mailbox attr:(NSArray *)attr {
+    [self sendCommand:@"STATUS", mailbox, attr, nil];
+    StatusData *data = [[self.responses objectForKey:@"STATUS"] lastObject];
+    NSDictionary *attrs = data.attr;
+    [self.responses removeObjectForKey:@"STATUS"];
+    return attrs;
+}
+
+- (TaggedResponse *) append:(NSString *)mailbox message:(NSString *)message flags:(NSArray *)flags time:(NSDate *)time {
+    NSMutableArray *args = [NSMutableArray array];
+    [args addObject:mailbox];
+    if (flags) {
+        [args addObject:flags];
+    }
+    if (time) {
+        [args addObject:time];
+    }
+    Literal *literal = [[[Literal alloc] initWithSomeData:message] autorelease];
+    [args addObject:literal];
+    return [self sendCommand:@"APPEND" withArray:args];
+}
+
+- (TaggedResponse *) check {
+    return [self sendCommand:@"CHECK", nil];
+}
+
+- (TaggedResponse *) close {
+    return [self sendCommand:@"CLOSE", nil];
+}
+
+- (NSArray *) expunge {
+    [self sendCommand:@"EXPUNGE", nil];
+    NSArray *expunged = [self.responses objectForKey:@"EXPUNGE"];
+    [self.responses removeObjectForKey:@"EXPUNGE"];
+    return expunged;
+}
+
+- (NSArray *) searchInternal:(NSString *)cmd key:(NSString *)key charset:(NSString *)charset {
+    //TODO
+    return nil;
+}
+
+- (NSArray *) search:(NSString *)key charset:(NSString *)charset {
+    return [self searchInternal:@"SEARCH" key:key charset:charset];
+}
+
+- (NSArray *) UIDSearch:(NSString *)key charset:(NSString *)charset {
+    return [self searchInternal:@"UID SEARCH" key:key charset:charset];
+}
+
+- (NSArray *) fetchInternal:(NSString *)cmd set:(NSArray *)set attr:(NSArray *)attr {
+    //TODO
+    return nil;
+}
+
+- (NSArray *) fetch:(NSArray *)set attr:(NSArray *)attr {
+    return [self fetchInternal:@"FETCH" set:set attr:attr];
+}
+
+- (NSArray *) UIDFetch:(NSArray *)set attr:(NSArray *)attr {
+    return [self fetchInternal:@"UID FETCH" set:set attr:attr];
 }
 
 + (NSString *) decodeUTF7:(NSString *)aString {
