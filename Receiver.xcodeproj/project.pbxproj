@@ -25,6 +25,7 @@
 		FE9B7BE7138BFB59004FEFB9 /* IMAPee.m in Sources */ = {isa = PBXBuildFile; fileRef = FE9B7BE6138BFB59004FEFB9 /* IMAPee.m */; };
 		FE9B7BEA138BFBFF004FEFB9 /* Literal.m in Sources */ = {isa = PBXBuildFile; fileRef = FE9B7BE9138BFBFF004FEFB9 /* Literal.m */; };
 		FE9B7BED138BFC78004FEFB9 /* MessageSet.m in Sources */ = {isa = PBXBuildFile; fileRef = FE9B7BEC138BFC78004FEFB9 /* MessageSet.m */; };
+		FEBA178A13A1D75B0065FFDB /* NSStream+Additions.m in Sources */ = {isa = PBXBuildFile; fileRef = FEBA178913A1D75B0065FFDB /* NSStream+Additions.m */; };
 		FECF4772138B52B900E300BC /* LoginAuthenticator.m in Sources */ = {isa = PBXBuildFile; fileRef = FECF4771138B52B900E300BC /* LoginAuthenticator.m */; };
 		FED143E5138B554B009F4B8D /* PlainAuthenticator.m in Sources */ = {isa = PBXBuildFile; fileRef = FED143E4138B554B009F4B8D /* PlainAuthenticator.m */; };
 		FED143E9138B5668009F4B8D /* CramMD5Authenticator.m in Sources */ = {isa = PBXBuildFile; fileRef = FED143E8138B5668009F4B8D /* CramMD5Authenticator.m */; };
@@ -79,6 +80,8 @@
 		FE9B7BE9138BFBFF004FEFB9 /* Literal.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Literal.m; sourceTree = "<group>"; };
 		FE9B7BEB138BFC78004FEFB9 /* MessageSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MessageSet.h; sourceTree = "<group>"; };
 		FE9B7BEC138BFC78004FEFB9 /* MessageSet.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MessageSet.m; sourceTree = "<group>"; };
+		FEBA178813A1D75B0065FFDB /* NSStream+Additions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSStream+Additions.h"; sourceTree = "<group>"; };
+		FEBA178913A1D75B0065FFDB /* NSStream+Additions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSStream+Additions.m"; sourceTree = "<group>"; };
 		FECF4770138B52B900E300BC /* LoginAuthenticator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LoginAuthenticator.h; sourceTree = "<group>"; };
 		FECF4771138B52B900E300BC /* LoginAuthenticator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LoginAuthenticator.m; sourceTree = "<group>"; };
 		FED143E3138B554B009F4B8D /* PlainAuthenticator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlainAuthenticator.h; sourceTree = "<group>"; };
@@ -151,6 +154,8 @@
 			children = (
 				FE6288C3138B57AE008EB583 /* NSString+Additions.h */,
 				FE6288C4138B57AE008EB583 /* NSString+Additions.m */,
+				FEBA178813A1D75B0065FFDB /* NSStream+Additions.h */,
+				FEBA178913A1D75B0065FFDB /* NSStream+Additions.m */,
 			);
 			name = Additions;
 			sourceTree = "<group>";
@@ -379,6 +384,7 @@
 				FE153CDA138C2871003A29DD /* BodyTypeMultipart.m in Sources */,
 				FE882992138C2AD4001A2B2F /* Token.m in Sources */,
 				FE882995138C2B46001A2B2F /* ResponseParser.m in Sources */,
+				FEBA178A13A1D75B0065FFDB /* NSStream+Additions.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
