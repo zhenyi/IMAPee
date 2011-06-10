@@ -390,18 +390,23 @@
     } else {
         NSMutableArray *result = [NSMutableArray array];
         [self match:T_LPAR];
-        while (YES) {
+        BOOL goOn = YES;
+        while (goOn) {
             aToken = [self lookahead];
             switch (aToken.symbol) {
                 case T_RPAR: {
                     [self shiftToken];
+                    goOn = NO;
                     break;
                 }
                 case T_SPACE: {
                     [self shiftToken];
+                    break;
                 }
             }
-            [result addObject:[self address]];
+            if (goOn) {
+                [result addObject:[self address]];
+            }
         }
         return result;
     }
@@ -534,20 +539,25 @@
         [someString appendString:aToken.value];
         aToken = [self match:T_LPAR];
         [someString appendString:aToken.value];
-        while (YES) {
+        BOOL goOn = YES;
+        while (goOn) {
             aToken = [self lookahead];
             switch (aToken.symbol) {
                 case T_RPAR: {
                     [someString appendString:aToken.value];
                     [self shiftToken];
+                    goOn = NO;
                     break;
                 }
                 case T_SPACE: {
                     [self shiftToken];
                     [someString appendString:aToken.value];
+                    break;
                 }
             }
-            [someString appendString:[self formatString:[self aString]]];
+            if (goOn) {
+                [someString appendString:[self formatString:[self aString]]];
+            }
         }
     }
     aToken = [self match:T_RBRA];
@@ -580,21 +590,26 @@
     }
     [self match:T_LPAR];
     NSMutableDictionary *param = [NSMutableDictionary dictionary];
-    while (YES) {
+    BOOL goOn = YES;
+    while (goOn) {
         aToken = [self lookahead];
         switch (aToken.symbol) {
             case T_RPAR: {
                 [self shiftToken];
+                goOn = NO;
                 break;
             }
             case T_SPACE: {
                 [self shiftToken];
+                break;
             }
         }
-        NSString *aName = [self caseInsensitiveString];
-        [self match:T_SPACE];
-        NSString *aVal = [self string];
-        [param setObject:aVal forKey:aName];
+        if (goOn) {
+            NSString *aName = [self caseInsensitiveString];
+            [self match:T_SPACE];
+            NSString *aVal = [self string];
+            [param setObject:aVal forKey:aName];
+        }
     }
     return param;
 }
@@ -643,6 +658,7 @@
                 }
                 case T_SPACE: {
                     [self shiftToken];
+                    break;
                 }
             }
             [result addObject:[self caseInsensitiveString]];
@@ -686,6 +702,7 @@
             }
             case T_SPACE: {
                 [self shiftToken];
+                break;
             }
         }
         [result addObject:[self bodyExtention]];
@@ -877,13 +894,16 @@
 - (BodyTypeMultipart *) bodyTypeMPart {
     NSMutableArray *parts = [NSMutableArray array];
     Token *aToken = nil;
-    while (YES) {
+    BOOL goOn = YES;
+    while (goOn) {
         aToken = [self lookahead];
         if (aToken.symbol == T_SPACE) {
             [self shiftToken];
-            break;
+            goOn = NO;
         }
-        [parts addObject:[self body]];
+        if (goOn) {
+            [parts addObject:[self body]];
+        }
     }
     NSString *mType = @"MULTIPART";
     NSString *mSubType = [self caseInsensitiveString];
@@ -952,16 +972,19 @@
 - (NSDictionary *) msgAtt {
     [self match:T_LPAR];
     NSDictionary *attr = nil;
-    while (YES) {
+    BOOL goOn = YES;
+    while (goOn) {
         Token *aToken = [self lookahead];
         switch (aToken.symbol) {
             case T_RPAR: {
                 [self shiftToken];
+                goOn = NO;
                 break;
             }
             case T_SPACE: {
                 [self shiftToken];
                 aToken = [self lookahead];
+                break;
             }
         }
         NSError *error = NULL;
@@ -1139,13 +1162,16 @@
     [self match:T_SPACE];
     NSString *mailbox = [self aString];
     NSMutableArray *quotaRoots = [NSMutableArray array];
-    while (YES) {
+    BOOL goOn = YES;
+    while (goOn) {
         token = [self lookahead];
         if (aToken.symbol != T_SPACE) {
-            break;
+            goOn = NO;
         }
-        [self shiftToken];
-        [quotaRoots addObject:[self aString]];
+        if (goOn) {
+            [self shiftToken];
+            [quotaRoots addObject:[self aString]];
+        }
     }
     MailboxQuotaRoot *data = [[MailboxQuotaRoot alloc] init];
     data.mailbox = mailbox;
@@ -1168,24 +1194,29 @@
     aToken = [self lookahead];
     if (aToken.symbol == T_SPACE) {
         [self shiftToken];
-        while (YES) {
+        BOOL goOn = YES;
+        while (goOn) {
             aToken = [self lookahead];
             switch (aToken.symbol) {
                 case T_CRLF: {
+                    goOn = NO;
                     break;
                 }
                 case T_SPACE: {
                     [self shiftToken];
+                    break;
                 }
             }
-            NSString *user = [self aString];
-            [self match:T_SPACE];
-            NSString *rights = [self aString];
-            MailboxACLItem *aclItem = [[MailboxACLItem alloc] init];
-            aclItem.user = user;
-            aclItem.rights = rights;
-            [data addObject:aclItem];
-            [aclItem release];
+            if (goOn) {
+                NSString *user = [self aString];
+                [self match:T_SPACE];
+                NSString *rights = [self aString];
+                MailboxACLItem *aclItem = [[MailboxACLItem alloc] init];
+                aclItem.user = user;
+                aclItem.rights = rights;
+                [data addObject:aclItem];
+                [aclItem release];
+            }
         }
     }
     UntaggedResponse *response = [[UntaggedResponse alloc] init];
@@ -1202,17 +1233,22 @@
     NSMutableArray *data = [NSMutableArray array];
     if (aToken.symbol == T_SPACE) {
         [self shiftToken];
-        while (YES) {
+        BOOL goOn = YES;
+        while (goOn) {
             aToken = [self lookahead];
             switch (aToken.symbol) {
                 case T_CRLF: {
+                    goOn = NO;
                     break;
                 }
                 case T_SPACE: {
                     [self shiftToken];
+                    break;
                 }
             }
-            [data addObject:[self number]];
+            if (goOn) {
+                [data addObject:[self number]];
+            }
         }
     }
     UntaggedResponse *response = [[UntaggedResponse alloc] init];
@@ -1225,7 +1261,8 @@
 - (ThreadMember *) threadBranch:(Token *)aToken {
     ThreadMember *rootMember = nil;
     ThreadMember *lastMember = nil;
-    while (YES) {
+    BOOL goOn = YES;
+    while (goOn) {
         [self shiftToken];
         aToken = [self lookahead];
         switch (aToken.symbol) {
@@ -1239,8 +1276,10 @@
                     [lastMember.children addObject:newMember];
                 }
                 lastMember = newMember;
+                break;
             }
             case T_SPACE: {
+                break;
             }
             case T_LPAR: {
                 if (rootMember == nil) {
@@ -1250,8 +1289,10 @@
                     lastMember = rootMember = dummyMember;
                 }
                 [lastMember.children addObject:[self threadBranch:aToken]];
+                break;
             }
             case T_RPAR: {
+                goOn = NO;
                 break;
             }
         }
@@ -1265,14 +1306,17 @@
     aToken = [self lookahead];
     NSMutableArray *threads = [NSMutableArray array];
     if (aToken.symbol == T_SPACE) {
-        while (YES) {
+        BOOL goOn = YES;
+        while (goOn) {
             [self shiftToken];
             aToken = [self lookahead];
             switch (aToken.symbol) {
                 case T_LPAR: {
                     [threads addObject:[self threadBranch:aToken]];
+                    break;
                 }
                 case T_CRLF: {
+                    goOn = NO;
                     break;
                 }
             }
@@ -1293,22 +1337,27 @@
     [self match:T_SPACE];
     [self match:T_LPAR];
     NSMutableDictionary *attr = [NSMutableDictionary dictionary];
-    while (YES) {
+    BOOL goOn = YES;
+    while (goOn) {
         aToken = [self lookahead];
         switch (aToken.symbol) {
             case T_RPAR: {
                 [self shiftToken];
+                goOn = NO;
                 break;
             }
             case T_SPACE: {
                 [self shiftToken];
+                break;
             }
         }
-        aToken = [self match:T_ATOM];
-        NSString *key = [aToken.value uppercaseString];
-        [self match:T_SPACE];
-        NSNumber *val = [self number];
-        [attr setObject:val forKey:key];
+        if (goOn) {
+            aToken = [self match:T_ATOM];
+            NSString *key = [aToken.value uppercaseString];
+            [self match:T_SPACE];
+            NSNumber *val = [self number];
+            [attr setObject:val forKey:key];
+        }
     }
     StatusData *data = [[StatusData alloc] init];
     data.mailbox = mailbox;
@@ -1326,17 +1375,22 @@
     NSString *aName = [aToken.value uppercaseString];
     [self match:T_SPACE];
     NSMutableArray *data = [NSMutableArray array];
-    while (YES) {
+    BOOL goOn = YES;
+    while (goOn) {
         aToken = [self lookahead];
         switch (aToken.symbol) {
             case T_CRLF: {
+                goOn = NO;
                 break;
             }
             case T_SPACE: {
                 [self shiftToken];
+                break;
             }
         }
-        [data addObject:[[self atom] uppercaseString]];
+        if (goOn) {
+            [data addObject:[[self atom] uppercaseString]];
+        }
     }
     UntaggedResponse *response = [[UntaggedResponse alloc] init];
     response.name = aName;

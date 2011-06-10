@@ -30,14 +30,65 @@
 @synthesize exception;
 @synthesize greeting;
 
-- (TaggedResponse *) sendCommand:(NSString *)cmd withArray:(NSArray *)argList {
+- (void) putString:(NSString *)str {
+    NSLog(@"C: %@", str);
+    NSData *dataToSend = [str dataUsingEncoding:NSUTF8StringEncoding];
+    int remainingToWrite = [dataToSend length];
+    void *marker = (void *)[dataToSend bytes];
+    while (0 < remainingToWrite) {
+        int actuallyWritten = 0;
+        actuallyWritten = [oStream write:marker maxLength:remainingToWrite];
+        remainingToWrite -= actuallyWritten;
+        marker += actuallyWritten;
+    }
+}
+
+- (NSString *) generateTag {
+    self.tagNo++;
+    return [NSString stringWithFormat:@"%@%04d", self.tagPrefix, self.tagNo];
+}
+
+- (TaggedResponse *) getTaggedResponse:(NSString *)tag cmd:(NSString *)cmd {
     //TODO
     return nil;
 }
 
-- (TaggedResponse *) sendCommand:(NSString *)cmd, ... {
+- (void) sendData:(id)data {
     //TODO
-    return nil;
+    [self putString:data];
+}
+
+- (void) validateData:(id)data {
+    //TODO
+}
+
+- (TaggedResponse *) sendCommand:(NSString *)cmd withArray:(NSArray *)argList {
+    for (id arg in argList) {
+        [self validateData:arg];
+    }
+    NSString *tag = [self generateTag];
+    [self putString:[NSString stringWithFormat:@"%@ %@", tag, cmd]];
+    for (id arg in argList) {
+        [self putString:@" "];
+        [self sendData:arg];
+    }
+    [self putString:@"\r\n"];
+    if ([cmd isEqualToString:@"LOGOUT"]) {
+        self.logoutCommandTag = tag;
+    }
+    return [self getTaggedResponse:tag cmd:cmd];
+}
+
+- (TaggedResponse *) sendCommand:(NSString *)cmd, ... {
+    NSMutableArray *argList = [NSMutableArray array];
+    va_list args;
+    va_start(args, cmd);
+    for (id arg = cmd; arg != nil; arg = va_arg(args, id)) {
+        [argList addObject:arg];
+    }
+    va_end(args);
+    [argList removeObjectAtIndex:0];
+    return [self sendCommand:cmd withArray:argList];
 }
 
 - (TaggedResponse *) sendCommand:(NSString *)cmd withBlock:(void(^)(id))block {
@@ -45,21 +96,26 @@
     return nil;
 }
 
+- (id) receiveResponses:(NSString *)resp {
+    //TODO
+    id response = [self.parser parse:resp];
+    NSLog(@"%@", [response name]);
+    return nil;
+}
+
 - (id) getResponse {
     NSRunLoop *runLoop = [NSRunLoop currentRunLoop];
     while ([self.responseBuffer count] == 0 && [runLoop runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]]);
-    if (self.greeting) {
-        //TODO
-        return nil;
-    } else {
+    while ([self.responseBuffer count] > 0) {
         NSString *first = [[self.responseBuffer objectAtIndex:0] copy];
         [self.responseBuffer removeObjectAtIndex:0];
-        return [self.parser parse:first];
+        if (self.greeting) {
+            return [self receiveResponses:first];
+        } else {
+            return [self.parser parse:first];
+        }
     }
-}
-
-- (void) receiveResponses {
-    //TODO
+    return nil;
 }
 
 - (id) initWithHost:(NSString *)aHost port:(int)aPort useSSL:(BOOL)isUsingSSL {
@@ -111,11 +167,6 @@
             oStream = nil;
             ResponseText *data = self.greeting.data;
             @throw [NSException exceptionWithName:@"ByeResponseError" reason:data.text userInfo:nil];
-        }
-        @try {
-            [self receiveResponses];
-        }
-        @catch (NSException *exception) {
         }
     }
     return self;
@@ -363,19 +414,6 @@
     return formatted;
 }
 
-- (void) putString:(NSString *)str {
-    NSLog(@"C: %@", str);
-    NSData *dataToSend = [str dataUsingEncoding:NSUTF8StringEncoding];
-    int remainingToWrite = [dataToSend length];
-    void *marker = (void *)[dataToSend bytes];
-    while (0 < remainingToWrite) {
-        int actuallyWritten = 0;
-        actuallyWritten = [oStream write:marker maxLength:remainingToWrite];
-        remainingToWrite -= actuallyWritten;
-        marker += actuallyWritten;
-    }
-}
-
 - (void) parseInputStream {
     uint8_t buffer[1024];
     int len;
@@ -392,13 +430,20 @@
             if (res) {
                 NSLog(@"S: %@", res);
                 [self.responseString appendString:res];
-                NSTextCheckingResult *match = [crlfRegex firstMatchInString:self.responseString options:0
-                                                                      range:NSMakeRange(0, [self.responseString length])];
-                if (match) {
-                    NSRange crlfRange = [match range];
-                    NSString *resultString = [self.responseString substringWithRange:crlfRange];
-                    [self.responseBuffer addObject:resultString];
-                    [self.responseString deleteCharactersInRange:crlfRange];
+                while (YES) {
+                    NSTextCheckingResult *match = [crlfRegex firstMatchInString:self.responseString options:0
+                                                                          range:NSMakeRange(0, [self.responseString length])];
+                    if (match) {
+                        NSRange crlfRange = [match range];
+                        NSString *resultString = [self.responseString substringWithRange:crlfRange];
+                        [self.responseBuffer addObject:resultString];
+                        [self.responseString deleteCharactersInRange:crlfRange];
+                        if (self.greeting) {
+                            [self getResponse];
+                        }
+                    } else {
+                        break;
+                    }
                 }
             }
         }
