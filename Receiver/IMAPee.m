@@ -8,6 +8,13 @@
 
 #import "IMAPee.h"
 
+@interface IMAPee()
+
+@property (retain) NSMutableString *responseString;
+@property (retain) NSMutableArray *responseBuffer;
+
+@end
+
 @implementation IMAPee
 
 @synthesize host, port;
@@ -18,6 +25,8 @@
 @synthesize taggedResponses;
 @synthesize responseHandlers;
 @synthesize logoutCommandTag;
+@synthesize responseString;
+@synthesize responseBuffer;
 @synthesize exception;
 @synthesize greeting;
 
@@ -36,13 +45,17 @@
     return nil;
 }
 
-- (void) startTLSSession {
-    //TODO
-}
-
 - (id) getResponse {
-    //TODO
-    return nil;
+    NSRunLoop *runLoop = [NSRunLoop currentRunLoop];
+    while ([self.responseBuffer count] == 0 && [runLoop runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]]);
+    if (self.greeting) {
+        //TODO
+        return nil;
+    } else {
+        NSString *first = [[self.responseBuffer objectAtIndex:0] copy];
+        [self.responseBuffer removeObjectAtIndex:0];
+        return [self.parser parse:first];
+    }
 }
 
 - (void) receiveResponses {
@@ -60,22 +73,44 @@
         self.tagPrefix = @"PEE";
         self.tagNo = 0;
         self.parser = [[ResponseParser alloc] init];
-        //TODO: sock open
+        [NSStream getStreamsToHostNamed:self.host port:self.port inputStream:&iStream outputStream:&oStream];
+        [iStream retain];
+        [oStream retain];
+        [iStream setDelegate:self];
+        [oStream setDelegate:self];
+        [iStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+        [oStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
         if (isUsingSSL) {
-            [self startTLSSession];
+            [iStream setProperty:NSStreamSocketSecurityLevelNegotiatedSSL forKey:NSStreamSocketSecurityLevelKey];
+            [oStream setProperty:NSStreamSocketSecurityLevelNegotiatedSSL forKey:NSStreamSocketSecurityLevelKey];
             self.useSSL = YES;
         } else {
             self.useSSL = NO;
         }
+        [iStream open];
+        [oStream open];
         self.responses = [NSMutableDictionary dictionary];
         self.taggedResponses = [NSMutableDictionary dictionary];
         self.responseHandlers = [NSMutableArray array];
         self.logoutCommandTag = nil;
+        self.responseString = [NSMutableString string];
+        self.responseBuffer = [NSMutableArray array];
         self.exception = nil;
-        self.greeting = [self getResponse];
-        if ([greeting.name isEqualToString:@"BYE"]) {
-            //TODO: close sock
-            @throw [NSException exceptionWithName:@"ByeResponseError" reason:self.greeting.data.text userInfo:nil];
+        self.greeting = nil;
+        self.greeting = [self getResponse];        
+        if ([self.greeting.name isEqualToString:@"BYE"]) {
+            [iStream close];
+            [oStream close];
+            [iStream removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+            [oStream removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+            [iStream setDelegate:nil];
+            [oStream setDelegate:nil];
+            [iStream release];
+            [oStream release];
+            iStream = nil;
+            oStream = nil;
+            ResponseText *data = self.greeting.data;
+            @throw [NSException exceptionWithName:@"ByeResponseError" reason:data.text userInfo:nil];
         }
         @try {
             [self receiveResponses];
@@ -326,6 +361,59 @@
     NSString *formatted = [dateFormatter stringFromDate:someDate];
     [dateFormatter release];
     return formatted;
+}
+
+- (void) putString:(NSString *)str {
+    NSLog(@"C: %@", str);
+    NSData *dataToSend = [str dataUsingEncoding:NSUTF8StringEncoding];
+    int remainingToWrite = [dataToSend length];
+    void *marker = (void *)[dataToSend bytes];
+    while (0 < remainingToWrite) {
+        int actuallyWritten = 0;
+        actuallyWritten = [oStream write:marker maxLength:remainingToWrite];
+        remainingToWrite -= actuallyWritten;
+        marker += actuallyWritten;
+    }
+}
+
+- (void) parseInputStream {
+    uint8_t buffer[1024];
+    int len;
+    NSError *error = NULL;
+    NSRegularExpression *crlfRegex = [NSRegularExpression regularExpressionWithPattern:@"^([^\\r\\n]*?\\r\\n)"
+                                                                               options:0
+                                                                                 error:&error];
+    while ([iStream hasBytesAvailable]) {
+        len = [iStream read:buffer maxLength:sizeof(buffer)];
+        if (len > 0) {
+            NSString *res = [[NSString alloc] initWithBytes:buffer 
+                                                     length:len 
+                                                   encoding:NSASCIIStringEncoding];
+            if (res) {
+                NSLog(@"S: %@", res);
+                [self.responseString appendString:res];
+                NSTextCheckingResult *match = [crlfRegex firstMatchInString:self.responseString options:0
+                                                                      range:NSMakeRange(0, [self.responseString length])];
+                if (match) {
+                    NSRange crlfRange = [match range];
+                    NSString *resultString = [self.responseString substringWithRange:crlfRange];
+                    [self.responseBuffer addObject:resultString];
+                    [self.responseString deleteCharactersInRange:crlfRange];
+                }
+            }
+        }
+    }
+}
+
+- (void) stream:(NSStream *)stream handleEvent:(NSStreamEvent)event {
+    switch (event) {
+        case NSStreamEventHasBytesAvailable: {
+            if (stream == iStream) {
+                [self parseInputStream];
+            }
+            break;
+        }
+    }
 }
 
 @end

@@ -9,6 +9,8 @@
 #import <Foundation/Foundation.h>
 #import "IMAPee.h"
 
+@class IMAPee;
+
 @interface Literal : NSObject {
     
     NSString *data;

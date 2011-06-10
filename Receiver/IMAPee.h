@@ -8,13 +8,15 @@
 
 #import <Foundation/Foundation.h>
 #import "NSString+Additions.h"
+#import "NSStream+Additions.h"
 #import "ResponseParser.h"
 #import "TaggedResponse.h"
+#import "UntaggedResponse.h"
 #import "RawData.h"
 #import "StatusData.h"
 #import "Literal.h"
 
-@interface IMAPee : NSObject {
+@interface IMAPee : NSObject <NSStreamDelegate> {
 
     NSString *host;
     int port;
@@ -26,8 +28,13 @@
     NSMutableDictionary *taggedResponses;
     NSMutableArray *responseHandlers;
     NSString *logoutCommandTag;
+    NSMutableString *responseString;
+    NSMutableArray *responseBuffer;
     NSException *exception;
-    TaggedResponse *greeting;
+    UntaggedResponse *greeting;
+    NSInputStream *iStream;
+	NSOutputStream *oStream;
+    
 }
 
 @property (copy) NSString *host;
@@ -41,7 +48,7 @@
 @property (retain) NSMutableArray *responseHandlers;
 @property (copy) NSString *logoutCommandTag;
 @property (retain) NSException *exception;
-@property (retain) TaggedResponse *greeting;
+@property (retain) UntaggedResponse *greeting;
 
 - (id) initWithHost:(NSString *)aHost port:(int)aPort useSSL:(BOOL)isUsingSSL;
 - (NSArray *) capability;
@@ -88,7 +95,6 @@
  new
  remove_response_handler
  sort
- starttls
  store
  thread
  uid_copy
