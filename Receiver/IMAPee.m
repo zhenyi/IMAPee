@@ -295,9 +295,7 @@
 }
 
 - (void) receiveResponses:(NSString *)resp {
-    /* DEBUG
     @try {
-    */
         id response = [self.parser parse:resp];
         if ([response isKindOfClass:[TaggedResponse class]]) {
             TaggedResponse *tagged = (TaggedResponse *)response;
@@ -335,12 +333,10 @@
         for (void(^handler)(id) in self.responseHandlers) {
             handler(response);
         }
-    /* DEBUG
     }
     @catch (NSException *anException) {
         self.exception = anException;
     }
-    */
 }
 
 - (void) getResponse {
