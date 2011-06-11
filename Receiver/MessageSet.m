@@ -53,7 +53,7 @@
 }
 
 - (void) ensureNZNumber:(int)num {
-    if (num < -1 || num == 0 || num >= 4294967296) {
+    if (num < -1 || num == 0) {
         @throw [NSException exceptionWithName:@"DataFormatError"
                                        reason:[NSString stringWithFormat:@"nz_number must be non-zero unsigned 32-bit integer: %d", num]
                                      userInfo:nil];

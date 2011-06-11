@@ -78,6 +78,14 @@
 - (NSArray *) UIDSearch:(NSString *)key charset:(NSString *)charset;
 - (NSArray *) fetch:(NSArray *)set attr:(NSArray *)attr;
 - (NSArray *) UIDFetch:(NSArray *)set attr:(NSArray *)attr;
+- (NSArray *) store:(NSArray *)set attr:(NSString *)attr flags:(NSArray *)flags;
+- (NSArray *) UIDStore:(NSArray *)set attr:(NSString *)attr flags:(NSArray *)flags;
+- (void) copy:(NSArray *)set mailbox:(NSString *)mailbox;
+- (void) UIDCopy:(NSArray *)set mailbox:(NSString *)mailbox;
+- (NSArray *) sort:(NSArray *)sortKeys searchKeys:(NSArray *)searchKeys charset:(NSString *)charset;
+- (NSArray *) UIDSort:(NSArray *)sortKeys searchKeys:(NSArray *)searchKeys charset:(NSString *)charset;
+- (NSArray *) thread:(NSString *)algorithm searchKeys:(NSArray *)searchKeys charset:(NSString *)charset;
+- (NSArray *) UIDThread:(NSString *)algorithm searchKeys:(NSArray *)searchKeys charset:(NSString *)charset;
 + (NSString *) decodeUTF7:(NSString *)aString;
 + (NSString *) encodeUTF7:(NSString *)aString;
 + (NSString *) formatDate:(NSDate *)someDate;
@@ -87,20 +95,11 @@
  add_authenticator
  add_response_handler
  authenticate
- copy
  disconnect
  disconnected?
  idle
  idle_done
- new
  remove_response_handler
- sort
- store
- thread
- uid_copy
- uid_sort
- uid_store
- uid_thread
 */
 
 @end

@@ -13,6 +13,8 @@
 @property (retain) NSMutableString *responseString;
 @property (retain) NSMutableArray *responseBuffer;
 
+- (void) sendData:(id)data;
+
 @end
 
 @implementation IMAPee
@@ -43,6 +45,10 @@
     }
 }
 
+- (NSString *) stringToFlag:(NSString *)data {
+    return [NSString stringWithFormat:@"\\\\%@", data];
+}
+
 - (NSString *) generateTag {
     self.tagNo++;
     return [NSString stringWithFormat:@"%@%04d", self.tagPrefix, self.tagNo];
@@ -53,13 +59,102 @@
     return nil;
 }
 
-- (void) sendData:(id)data {
+- (void) sendSymbol:(NSString *)str {
     //TODO
-    [self putString:data];
+}
+
+- (void) sendLiteral:(NSString *)str {
+    //TODO
+}
+
+- (void) sendQuotedString:(NSString *)str {
+    //TODO
+}
+
+- (void) sendStringData:(NSString *)str {
+    NSError *error = NULL;
+    NSRegularExpression *symbolRegex = [NSRegularExpression regularExpressionWithPattern:@"^\\\\\\\\"
+                                                                                 options:0
+                                                                                   error:&error];
+    NSRegularExpression *literalRegex = [NSRegularExpression regularExpressionWithPattern:@"[\\x80-\\xff\\r\\n]"
+                                                                                  options:0
+                                                                                    error:&error];
+    NSRegularExpression *quotedRegex = [NSRegularExpression regularExpressionWithPattern:@"[(){ \\x00-\\x1f\\x7f%*\"\\\\]"
+                                                                                 options:0
+                                                                                   error:&error];
+    if ([str length] == 0) {
+        [self putString:@"\"\""];
+    } else if ([symbolRegex numberOfMatchesInString:str options:0 range:NSMakeRange(0, [str length])]) {
+        [self sendSymbol:str];
+    } else if ([literalRegex numberOfMatchesInString:str options:0 range:NSMakeRange(0, [str length])]) {
+        [self sendLiteral:str];
+    } else if ([quotedRegex numberOfMatchesInString:str options:0 range:NSMakeRange(0, [str length])]) {
+        [self sendQuotedString:str];
+    } else {
+        [self putString:str];
+    }
+}
+
+- (void) sendNumberData:(NSNumber *)num {
+    int i = [num intValue];
+    [self putString:[NSString stringWithFormat:@"%d", i]];
+}
+
+- (void) sendListData:(NSArray *)list {
+    [self putString:@"("];
+    BOOL first = YES;
+    for (id item in list) {
+        if (first) {
+            first = NO;
+        } else {
+            [self putString:@" "];
+        }
+        [self sendData:item];
+    }
+    [self putString:@")"];
+}
+
+- (void) sendTimeData:(NSDate *)time {
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    [dateFormatter setTimeZone:[NSTimeZone timeZoneWithName:@"GMT"]];
+    [dateFormatter setDateFormat:@"dd-MMM-yyyy HH:mm:ss Z"];
+    NSString *formatted = [dateFormatter stringFromDate:[NSDate date]];
+    [dateFormatter release];
+    [self putString:formatted];
+}
+
+- (void) sendData:(id)data {
+    if (data == nil) {
+        [self putString:@"NIL"];
+    } else if ([data isKindOfClass:[NSString class]]) {
+        [self sendStringData:data];
+    } else if ([data isKindOfClass:[NSNumber class]]) {
+        [self sendNumberData:data];
+    } else if ([data isKindOfClass:[NSArray class]]) {
+        [self sendListData:data];
+    } else if ([data isKindOfClass:[NSDate class]]) {
+        [self sendTimeData:data];
+    } else {
+        [data sendData:self];
+    }
 }
 
 - (void) validateData:(id)data {
-    //TODO
+    if (data == nil) {
+    } else if ([data isKindOfClass:[NSString class]]) {
+    } else if ([data isKindOfClass:[NSNumber class]]) {
+        NSInteger i = [data intValue];
+        if (i < 0) {
+            @throw [NSException exceptionWithName:@"DataFormatError" reason:[NSString stringWithFormat:@"%d", i] userInfo:nil];
+        }
+    } else if ([data isKindOfClass:[NSArray class]]) {
+        for (id item in data) {
+            [self validateData:item];
+        }
+    } else if ([data isKindOfClass:[NSDate class]]) {
+    } else {
+        [data validate];
+    }
 }
 
 - (TaggedResponse *) sendCommand:(NSString *)cmd withArray:(NSArray *)argList {
@@ -96,26 +191,29 @@
     return nil;
 }
 
-- (id) receiveResponses:(NSString *)resp {
+- (void) receiveResponses:(NSString *)resp {
     //TODO
     id response = [self.parser parse:resp];
-    NSLog(@"%@", [response name]);
-    return nil;
+    if ([response isKindOfClass:[TaggedResponse class]]) {
+    } else if ([response isKindOfClass:[UntaggedResponse class]]) {
+    } else if ([response isKindOfClass:[ContinuationRequest class]]) {
+    }
 }
 
-- (id) getResponse {
-    NSRunLoop *runLoop = [NSRunLoop currentRunLoop];
-    while ([self.responseBuffer count] == 0 && [runLoop runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]]);
-    while ([self.responseBuffer count] > 0) {
+- (void) getResponse {
+    if ([self.responseBuffer count] > 0) {
         NSString *first = [[self.responseBuffer objectAtIndex:0] copy];
         [self.responseBuffer removeObjectAtIndex:0];
-        if (self.greeting) {
-            return [self receiveResponses:first];
-        } else {
-            return [self.parser parse:first];
-        }
+        [self receiveResponses:first];
     }
-    return nil;
+}
+
+- (UntaggedResponse *) getGreeting {
+    NSRunLoop *runLoop = [NSRunLoop currentRunLoop];
+    while ([self.responseBuffer count] == 0 && [runLoop runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]]);
+    NSString *first = [[self.responseBuffer objectAtIndex:0] copy];
+    [self.responseBuffer removeObjectAtIndex:0];
+    return [self.parser parse:first];
 }
 
 - (id) initWithHost:(NSString *)aHost port:(int)aPort useSSL:(BOOL)isUsingSSL {
@@ -153,7 +251,7 @@
         self.responseBuffer = [NSMutableArray array];
         self.exception = nil;
         self.greeting = nil;
-        self.greeting = [self getResponse];        
+        self.greeting = [self getGreeting];        
         if ([self.greeting.name isEqualToString:@"BYE"]) {
             [iStream close];
             [oStream close];
@@ -289,7 +387,11 @@
     NSMutableArray *args = [NSMutableArray array];
     [args addObject:mailbox];
     if (flags) {
-        [args addObject:flags];
+        NSMutableArray *flagsArray = [NSMutableArray array];
+        for (NSString *flag in flags) {
+            [flagsArray addObject:[self stringToFlag:flag]];
+        }
+        [args addObject:flagsArray];
     }
     if (time) {
         [args addObject:time];
@@ -338,6 +440,63 @@
 
 - (NSArray *) UIDFetch:(NSArray *)set attr:(NSArray *)attr {
     return [self fetchInternal:@"UID FETCH" set:set attr:attr];
+}
+
+- (NSArray *) storeInternal:(NSString *)cmd set:(NSArray *)set attr:(NSString *)attr flags:(NSArray *)flags {
+    //TODO
+    /*
+    convert flags to symbol
+    NSMutableArray *flagsArray = [NSMutableArray array];
+    for (NSString *flag in flags) {
+        [flagsArray addObject:[self stringToFlag:flag]];
+    }
+    */
+    return nil;
+}
+
+- (NSArray *) store:(NSArray *)set attr:(NSString *)attr flags:(NSArray *)flags {
+    return [self storeInternal:@"STORE" set:set attr:attr flags:flags];
+}
+- (NSArray *) UIDStore:(NSArray *)set attr:(NSString *)attr flags:(NSArray *)flags {
+    return [self storeInternal:@"UID STORE" set:set attr:attr flags:flags];
+}
+
+- (void) copyInternal:(NSString *)cmd set:(NSArray *)set mailbox:(NSString *)mailbox {
+    //TODO
+}
+
+- (void) copy:(NSArray *)set mailbox:(NSString *)mailbox {
+    [self copyInternal:@"COPY" set:set mailbox:mailbox];
+}
+
+- (void) UIDCopy:(NSArray *)set mailbox:(NSString *)mailbox {
+    [self copyInternal:@"UID COPY" set:set mailbox:mailbox];
+}
+
+- (NSArray *) sortInternal:(NSString *)cmd sortKeys:(NSArray *)sortKeys searchKeys:(NSArray *)searchKeys charset:(NSString *)charset {
+    //TODO
+    return nil;
+}
+
+- (NSArray *) sort:(NSArray *)sortKeys searchKeys:(NSArray *)searchKeys charset:(NSString *)charset {
+    return [self sortInternal:@"SORT" sortKeys:sortKeys searchKeys:searchKeys charset:charset];
+}
+
+- (NSArray *) UIDSort:(NSArray *)sortKeys searchKeys:(NSArray *)searchKeys charset:(NSString *)charset {
+    return [self sortInternal:@"UID SORT" sortKeys:sortKeys searchKeys:searchKeys charset:charset];
+}
+
+- (NSArray *) threadInternal:(NSString *)cmd algorithm:(NSString *)algorithm searchKeys:(NSArray *)searchKeys charset:(NSString *)charset {
+    //TODO
+    return nil;
+}
+
+- (NSArray *) thread:(NSString *)algorithm searchKeys:(NSArray *)searchKeys charset:(NSString *)charset {
+    return [self threadInternal:@"THREAD" algorithm:algorithm searchKeys:searchKeys charset:charset];
+}
+
+- (NSArray *) UIDThread:(NSString *)algorithm searchKeys:(NSArray *)searchKeys charset:(NSString *)charset {
+    return [self threadInternal:@"UID THREAD" algorithm:algorithm searchKeys:searchKeys charset:charset];
 }
 
 + (NSString *) decodeUTF7:(NSString *)aString {
@@ -430,7 +589,8 @@
             if (res) {
                 NSLog(@"S: %@", res);
                 [self.responseString appendString:res];
-                while (YES) {
+                BOOL goOn = YES;
+                while (goOn) {
                     NSTextCheckingResult *match = [crlfRegex firstMatchInString:self.responseString options:0
                                                                           range:NSMakeRange(0, [self.responseString length])];
                     if (match) {
@@ -442,7 +602,7 @@
                             [self getResponse];
                         }
                     } else {
-                        break;
+                        goOn = NO;
                     }
                 }
             }
