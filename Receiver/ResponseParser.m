@@ -415,7 +415,7 @@
 - (Envelope *) envelope {
     self.lexState = EXPR_DATA;
     Token *aToken = [self lookahead];
-    Envelope *result = nil;
+    Envelope *result = [[Envelope alloc] init];
     if (aToken.symbol == T_NIL) {
         [self shiftToken];
         result = nil;
@@ -987,44 +987,46 @@
                 break;
             }
         }
-        NSError *error = NULL;
-        NSRegularExpression *envelopeRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:ENVELOPE)\\z"
-                                                                                       options:NSRegularExpressionCaseInsensitive
-                                                                                         error:&error];
-        NSRegularExpression *flagsRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:FLAGS)\\z"
-                                                                                    options:NSRegularExpressionCaseInsensitive
-                                                                                      error:&error];
-        NSRegularExpression *internalDateRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:INTERNALDATE)\\z"
+        if (goOn) {
+            NSError *error = NULL;
+            NSRegularExpression *envelopeRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:ENVELOPE)\\z"
                                                                                            options:NSRegularExpressionCaseInsensitive
                                                                                              error:&error];
-        NSRegularExpression *rfc822TextRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:RFC822(?:\\.HEADER|\\.TEXT)?)\\z"
-                                                                                         options:NSRegularExpressionCaseInsensitive
-                                                                                           error:&error];
-        NSRegularExpression *rfc822SizeRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:RFC822\\.SIZE)\\z"
-                                                                                         options:NSRegularExpressionCaseInsensitive
-                                                                                           error:&error];
-        NSRegularExpression *bodyRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:BODY(?:STRUCTURE)?)\\z"
-                                                                                   options:NSRegularExpressionCaseInsensitive
-                                                                                     error:&error];
-        NSRegularExpression *uidRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:UID)\\z"
-                                                                                  options:NSRegularExpressionCaseInsensitive
-                                                                                    error:&error];
-        if ([envelopeRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
-            attr = [self envelopeData];
-        } else if ([flagsRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
-            attr = [self flagsData];
-        } else if ([internalDateRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
-            attr = [self internalDateData];
-        } else if ([rfc822TextRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
-            attr = [self rfc822Text];
-        } else if ([rfc822SizeRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
-            attr = [self rfc822Size];
-        } else if ([bodyRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
-            attr = [self bodyData];
-        } else if ([uidRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
-            attr = [self uidData];
-        } else {
-            [self parseError:[NSString stringWithFormat:@"unknown attribute %@", aToken.value]];
+            NSRegularExpression *flagsRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:FLAGS)\\z"
+                                                                                        options:NSRegularExpressionCaseInsensitive
+                                                                                          error:&error];
+            NSRegularExpression *internalDateRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:INTERNALDATE)\\z"
+                                                                                               options:NSRegularExpressionCaseInsensitive
+                                                                                                 error:&error];
+            NSRegularExpression *rfc822TextRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:RFC822(?:\\.HEADER|\\.TEXT)?)\\z"
+                                                                                             options:NSRegularExpressionCaseInsensitive
+                                                                                               error:&error];
+            NSRegularExpression *rfc822SizeRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:RFC822\\.SIZE)\\z"
+                                                                                             options:NSRegularExpressionCaseInsensitive
+                                                                                               error:&error];
+            NSRegularExpression *bodyRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:BODY(?:STRUCTURE)?)\\z"
+                                                                                       options:NSRegularExpressionCaseInsensitive
+                                                                                         error:&error];
+            NSRegularExpression *uidRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:UID)\\z"
+                                                                                      options:NSRegularExpressionCaseInsensitive
+                                                                                        error:&error];
+            if ([envelopeRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
+                attr = [self envelopeData];
+            } else if ([flagsRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
+                attr = [self flagsData];
+            } else if ([internalDateRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
+                attr = [self internalDateData];
+            } else if ([rfc822TextRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
+                attr = [self rfc822Text];
+            } else if ([rfc822SizeRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
+                attr = [self rfc822Size];
+            } else if ([bodyRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
+                attr = [self bodyData];
+            } else if ([uidRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
+                attr = [self uidData];
+            } else {
+                [self parseError:[NSString stringWithFormat:@"unknown attribute %@", aToken.value]];
+            }
         }
     }
     return attr;
