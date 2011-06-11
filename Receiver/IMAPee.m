@@ -25,6 +25,7 @@
 @synthesize parser;
 @synthesize responses;
 @synthesize taggedResponses;
+@synthesize continuationRequestArrived;
 @synthesize responseHandlers;
 @synthesize logoutCommandTag;
 @synthesize responseString;
@@ -55,20 +56,64 @@
 }
 
 - (TaggedResponse *) getTaggedResponse:(NSString *)tag cmd:(NSString *)cmd {
-    //TODO
-    return nil;
+    NSRunLoop *runLoop = [NSRunLoop currentRunLoop];
+    while (![self.taggedResponses objectForKey:tag] && [runLoop runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]]);
+    if (self.exception) {
+        @throw self.exception;
+    }
+    TaggedResponse *resp = [[self.taggedResponses objectForKey:tag] retain];
+    [self.taggedResponses removeObjectForKey:tag];
+    NSError *error = NULL;
+    NSRegularExpression *noRespRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:NO)\\z"
+                                                                                 options:NSRegularExpressionCaseInsensitive
+                                                                                   error:&error];
+    NSRegularExpression *badRespRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:BAD)\\z"
+                                                                                  options:NSRegularExpressionCaseInsensitive
+                                                                                    error:&error];
+    if ([noRespRegex numberOfMatchesInString:resp.name options:0 range:NSMakeRange(0, [resp.name length])]) {
+        ResponseText *text = (ResponseText *) resp.data;
+        @throw [NSException exceptionWithName:@"NoResponseError" reason:text.text userInfo:nil];
+    } else if ([badRespRegex numberOfMatchesInString:resp.name options:0 range:NSMakeRange(0, [resp.name length])]) {
+        ResponseText *text = (ResponseText *) resp.data;
+        @throw [NSException exceptionWithName:@"BadResponseError" reason:text.text userInfo:nil];
+    } else {
+        return [resp autorelease];
+    }
 }
 
 - (void) sendSymbol:(NSString *)str {
-    //TODO
+    NSError *error = NULL;
+    NSRegularExpression *symbolRegex = [NSRegularExpression regularExpressionWithPattern:@"^\\\\"
+                                                                                 options:0
+                                                                                   error:&error];
+    NSString *replaced = [symbolRegex stringByReplacingMatchesInString:str
+                                                               options:0
+                                                                 range:NSMakeRange(0, [str length])
+                                                          withTemplate:@""];
+    [self putString:replaced];
 }
 
 - (void) sendLiteral:(NSString *)str {
-    //TODO
+    [self putString:[NSString stringWithFormat:@"{%d}\r\n", [str length]]];
+    NSRunLoop *runLoop = [NSRunLoop currentRunLoop];
+    while (!self.continuationRequestArrived && [runLoop runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]]);
+    self.continuationRequestArrived = NO;
+    if (self.exception) {
+        @throw self.exception;
+    }
+    [self putString:str];
 }
 
 - (void) sendQuotedString:(NSString *)str {
-    //TODO
+    NSError *error = NULL;
+    NSRegularExpression *quotedRegex = [NSRegularExpression regularExpressionWithPattern:@"([\"\\\\])"
+                                                                                 options:0
+                                                                                   error:&error];
+    NSString *replaced = [quotedRegex stringByReplacingMatchesInString:str
+                                                               options:0
+                                                                 range:NSMakeRange(0, [str length])
+                                                          withTemplate:@"\\\\$1"];
+    [self putString:[NSString stringWithFormat:@"\"%@\"", replaced]];
 }
 
 - (void) sendStringData:(NSString *)str {
@@ -191,12 +236,54 @@
     return nil;
 }
 
+- (void) recordResponse:(NSString *)name data:(id)data {
+    if (![self.responses objectForKey:name]) {
+        [self.responses setObject:[NSMutableArray array] forKey:name];
+    }
+    NSMutableArray *array = [self.responses objectForKey:name];
+    [array addObject:data];
+}
+
 - (void) receiveResponses:(NSString *)resp {
-    //TODO
-    id response = [self.parser parse:resp];
-    if ([response isKindOfClass:[TaggedResponse class]]) {
-    } else if ([response isKindOfClass:[UntaggedResponse class]]) {
-    } else if ([response isKindOfClass:[ContinuationRequest class]]) {
+    @try {
+        id response = [self.parser parse:resp];
+        if ([response isKindOfClass:[TaggedResponse class]]) {
+            TaggedResponse *tagged = (TaggedResponse *)response;
+            [self.taggedResponses setObject:tagged forKey:tagged.tag];
+            if (tagged.tag == self.logoutCommandTag) {
+                return;
+            }
+        } else if ([response isKindOfClass:[UntaggedResponse class]]) {
+            UntaggedResponse *untagged = (UntaggedResponse *)response;
+            [self recordResponse:untagged.name data:untagged.data];
+            if ([untagged.data isKindOfClass:[ResponseText class]]) {
+                ResponseText *text = (ResponseText *) untagged.data;
+                ResponseCode *code = text.code;
+                [self recordResponse:code.name data:code.data];
+            }
+            if ([untagged.name isEqualToString:@"BYE"] && self.logoutCommandTag == nil) {
+                [iStream close];
+                [oStream close];
+                [iStream removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+                [oStream removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+                [iStream setDelegate:nil];
+                [oStream setDelegate:nil];
+                [iStream release];
+                [oStream release];
+                iStream = nil;
+                oStream = nil;
+                ResponseText *text = (ResponseText *) untagged.data;
+                @throw [NSException exceptionWithName:@"ByeResponseError" reason:text.text userInfo:nil];
+            }
+        } else if ([response isKindOfClass:[ContinuationRequest class]]) {
+            self.continuationRequestArrived = YES;
+        }
+        for (void(^handler)(id) in self.responseHandlers) {
+            handler(response);
+        }
+    }
+    @catch (NSException *anException) {
+        self.exception = anException;
     }
 }
 
@@ -246,6 +333,7 @@
         self.responses = [NSMutableDictionary dictionary];
         self.taggedResponses = [NSMutableDictionary dictionary];
         self.responseHandlers = [NSMutableArray array];
+        self.continuationRequestArrived = NO;
         self.logoutCommandTag = nil;
         self.responseString = [NSMutableString string];
         self.responseBuffer = [NSMutableArray array];
@@ -270,11 +358,19 @@
     return self;
 }
 
+- (void) addResponseHandler:(void(^)(id))block {
+    [self.responseHandlers addObject:block];
+}
+
+- (void) removeResponseHandler:(void(^)(id))block {
+    [self.responseHandlers removeObject:block];
+}
+
 - (NSArray *) capability {
     [self sendCommand:@"CAPABILITY", nil];
-    NSArray *capabilities = [[self.responses objectForKey:@"CAPABILITY"] lastObject];
+    NSArray *capabilities = [[[self.responses objectForKey:@"CAPABILITY"] lastObject] copy];
     [self.responses removeObjectForKey:@"CAPABILITY"];
-    return capabilities;
+    return [capabilities autorelease];
 }
 
 - (TaggedResponse *) noop {
@@ -321,9 +417,9 @@
 
 - (NSArray *) list:(NSString *)refName mailbox:(NSString *)mailbox {
     [self sendCommand:@"LIST", refName, mailbox, nil];
-    NSArray *mailboxes = [self.responses objectForKey:@"LIST"];
+    NSArray *mailboxes = [[self.responses objectForKey:@"LIST"] copy];
     [self.responses removeObjectForKey:@"LIST"];
-    return mailboxes;
+    return [mailboxes autorelease];
 }
 
 - (NSArray *) getQuotaRoot:(NSString *)mailbox {
@@ -338,9 +434,9 @@
 
 - (NSArray *) getQuota:(NSString *)mailbox {
     [self sendCommand:@"GETQUOTA", mailbox, nil];
-    NSArray *quota = [self.responses objectForKey:@"QUOTA"];
+    NSArray *quota = [[self.responses objectForKey:@"QUOTA"] copy];
     [self.responses removeObjectForKey:@"QUOTA"];
-    return quota;
+    return [quota autorelease];
 }
 
 - (TaggedResponse *) setQuota:(NSString *)mailbox quota:(NSString *)quota {
@@ -363,21 +459,21 @@
 
 - (NSArray *) getACL:(NSString *)mailbox {
     [self sendCommand:@"GETACL", mailbox, nil];
-    NSArray *ACLItems = [[self.responses objectForKey:@"ACL"] lastObject];
+    NSArray *ACLItems = [[[self.responses objectForKey:@"ACL"] lastObject] copy];
     [self.responses removeObjectForKey:@"ACL"];
-    return ACLItems;
+    return [ACLItems autorelease];
 }
 
 - (NSArray *) lsub:(NSString *)refName mailbox:(NSString *)mailbox {
     [self sendCommand:@"LSUB", refName, mailbox, nil];
-    NSArray *mailboxes = [self.responses objectForKey:@"LSUB"];
+    NSArray *mailboxes = [[self.responses objectForKey:@"LSUB"] copy];
     [self.responses removeObjectForKey:@"LSUB"];
-    return mailboxes;
+    return [mailboxes autorelease];
 }
 
 - (NSDictionary *) status:(NSString *)mailbox attr:(NSArray *)attr {
     [self sendCommand:@"STATUS", mailbox, attr, nil];
-    StatusData *data = [[self.responses objectForKey:@"STATUS"] lastObject];
+    StatusData *data = [[[[self.responses objectForKey:@"STATUS"] lastObject] copy] autorelease];
     NSDictionary *attrs = data.attr;
     [self.responses removeObjectForKey:@"STATUS"];
     return attrs;
@@ -411,9 +507,9 @@
 
 - (NSArray *) expunge {
     [self sendCommand:@"EXPUNGE", nil];
-    NSArray *expunged = [self.responses objectForKey:@"EXPUNGE"];
+    NSArray *expunged = [[self.responses objectForKey:@"EXPUNGE"] copy];
     [self.responses removeObjectForKey:@"EXPUNGE"];
-    return expunged;
+    return [expunged autorelease];
 }
 
 - (NSArray *) searchInternal:(NSString *)cmd key:(NSString *)key charset:(NSString *)charset {

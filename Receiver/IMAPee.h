@@ -26,6 +26,7 @@
     ResponseParser *parser;
     NSMutableDictionary *responses;
     NSMutableDictionary *taggedResponses;
+    BOOL continuationRequestArrived;
     NSMutableArray *responseHandlers;
     NSString *logoutCommandTag;
     NSMutableString *responseString;
@@ -45,12 +46,15 @@
 @property (retain) ResponseParser *parser;
 @property (retain) NSMutableDictionary *responses;
 @property (retain) NSMutableDictionary *taggedResponses;
+@property (assign) BOOL continuationRequestArrived;
 @property (retain) NSMutableArray *responseHandlers;
 @property (copy) NSString *logoutCommandTag;
 @property (retain) NSException *exception;
 @property (retain) UntaggedResponse *greeting;
 
 - (id) initWithHost:(NSString *)aHost port:(int)aPort useSSL:(BOOL)isUsingSSL;
+- (void) addResponseHandler:(void(^)(id))block;
+- (void) removeResponseHandler:(void(^)(id))block;
 - (NSArray *) capability;
 - (TaggedResponse *) noop;
 - (TaggedResponse *) logout;
@@ -93,13 +97,10 @@
 
 /*
  add_authenticator
- add_response_handler
  authenticate
  disconnect
- disconnected?
  idle
  idle_done
- remove_response_handler
 */
 
 @end
