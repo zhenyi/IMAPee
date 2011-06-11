@@ -534,7 +534,7 @@
 
 - (NSDictionary *) status:(NSString *)mailbox attr:(NSArray *)attr {
     [self sendCommand:@"STATUS", mailbox, attr, nil];
-    StatusData *data = [[[[self.responses objectForKey:@"STATUS"] lastObject] copy] autorelease];
+    StatusData *data = [[[[self.responses objectForKey:@"STATUS"] lastObject] retain] autorelease];
     NSDictionary *attrs = data.attr;
     [self.responses removeObjectForKey:@"STATUS"];
     return attrs;

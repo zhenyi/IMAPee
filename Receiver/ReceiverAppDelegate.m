@@ -14,17 +14,6 @@
 @synthesize window=_window;
 
 - (BOOL) application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    IMAPee *imap = [[IMAPee alloc] initWithHost:@"imap.gmail.com" port:993 useSSL:YES];
-    [imap login:@"login" password:@"password"];
-    [imap examine:@"[Gmail]/Spam"];
-    NSArray *recentSpams = [imap search:@"ALL" charset:nil];
-    for (NSNumber *messageId in recentSpams) {
-        FetchData *data = [[imap fetch:[NSArray arrayWithObject:messageId] attr:[NSArray arrayWithObject:@"ENVELOPE"]]
-                           objectAtIndex:0];
-        Envelope *envelope = [data.attr objectForKey:@"ENVELOPE"];
-        NSLog(@"%@: \t%@", [[envelope.from objectAtIndex:0] name], envelope.subject);
-    }
-    [imap logout];
     [self.window makeKeyAndVisible];
     return YES;
 }

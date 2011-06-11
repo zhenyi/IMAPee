@@ -7,7 +7,6 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "IMAPee.h"
 
 @interface ReceiverAppDelegate : NSObject <UIApplicationDelegate> {
 
