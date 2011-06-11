@@ -236,6 +236,19 @@
     return nil;
 }
 
+- (void) disconnect {
+    [iStream close];
+    [oStream close];
+    [iStream removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+    [oStream removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+    [iStream setDelegate:nil];
+    [oStream setDelegate:nil];
+    [iStream release];
+    [oStream release];
+    iStream = nil;
+    oStream = nil;
+}
+
 - (void) recordResponse:(NSString *)name data:(id)data {
     if (![self.responses objectForKey:name]) {
         [self.responses setObject:[NSMutableArray array] forKey:name];
@@ -245,7 +258,9 @@
 }
 
 - (void) receiveResponses:(NSString *)resp {
+    /* DEBUG
     @try {
+    */
         id response = [self.parser parse:resp];
         if ([response isKindOfClass:[TaggedResponse class]]) {
             TaggedResponse *tagged = (TaggedResponse *)response;
@@ -259,7 +274,9 @@
             if ([untagged.data isKindOfClass:[ResponseText class]]) {
                 ResponseText *text = (ResponseText *) untagged.data;
                 ResponseCode *code = text.code;
-                [self recordResponse:code.name data:code.data];
+                if (code) {
+                    [self recordResponse:code.name data:code.data];
+                }
             }
             if ([untagged.name isEqualToString:@"BYE"] && self.logoutCommandTag == nil) {
                 [iStream close];
@@ -281,10 +298,12 @@
         for (void(^handler)(id) in self.responseHandlers) {
             handler(response);
         }
+    /* DEBUG
     }
     @catch (NSException *anException) {
         self.exception = anException;
     }
+    */
 }
 
 - (void) getResponse {

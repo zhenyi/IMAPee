@@ -16,6 +16,8 @@
 - (BOOL) application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     IMAPee *imap = [[IMAPee alloc] initWithHost:@"imap.gmail.com" port:993 useSSL:YES];
     [imap login:@"login" password:@"password"];
+    [imap list:@"" mailbox:@"*"];
+    [imap logout];
     [self.window makeKeyAndVisible];
     return YES;
 }

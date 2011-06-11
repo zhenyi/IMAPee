@@ -53,6 +53,7 @@
 @property (retain) UntaggedResponse *greeting;
 
 - (id) initWithHost:(NSString *)aHost port:(int)aPort useSSL:(BOOL)isUsingSSL;
+- (void) disconnect;
 - (void) addResponseHandler:(void(^)(id))block;
 - (void) removeResponseHandler:(void(^)(id))block;
 - (NSArray *) capability;
@@ -98,7 +99,6 @@
 /*
  add_authenticator
  authenticate
- disconnect
  idle
  idle_done
 */

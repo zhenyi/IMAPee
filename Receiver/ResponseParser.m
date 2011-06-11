@@ -53,7 +53,7 @@
         self.pos = 0;
         self.lexState = EXPR_NIL;
         self.token = nil;
-        self.flagSymbols = [NSDictionary dictionary];
+        self.flagSymbols = [NSMutableDictionary dictionary];
     }
     return self;
 }
@@ -131,7 +131,7 @@
 
 - (Token *) matches:(NSArray *)args {
     Token *aToken = [self lookahead];
-    if ([args containsObject:[NSNumber numberWithInt:aToken.symbol]]) {
+    if (![args containsObject:[NSNumber numberWithInt:aToken.symbol]]) {
         NSMutableArray *array = [NSMutableArray array];
         for (NSNumber *number in args) {
             [array addObject:[self tokenIdToName:[number intValue]]];
@@ -151,8 +151,8 @@
     NSError *error = NULL;
     NSRegularExpression *bracketRegex = [NSRegularExpression regularExpressionWithPattern:@"\\(([^)]*)\\)"
                                                                                   options:NSRegularExpressionCaseInsensitive error:&error];
-    if ([bracketRegex numberOfMatchesInString:self.str options:0 range:NSMakeRange(self.pos, [self.str length])]) {
-        NSRange rangeOfFirstMatch = [bracketRegex rangeOfFirstMatchInString:self.str options:0 range:NSMakeRange(self.pos, [self.str length])];
+    if ([bracketRegex numberOfMatchesInString:self.str options:0 range:NSMakeRange(self.pos, [self.str length] - self.pos)]) {
+        NSRange rangeOfFirstMatch = [bracketRegex rangeOfFirstMatchInString:self.str options:0 range:NSMakeRange(self.pos, [self.str length] - self.pos)];
         self.pos = rangeOfFirstMatch.location + rangeOfFirstMatch.length;
         NSString *matchedString = [self.str substringWithRange:rangeOfFirstMatch];
         NSRegularExpression *flagRegex = [NSRegularExpression regularExpressionWithPattern:@"\\\\([^\\x80-\\xff(){ \\x00-\\x1f\\x7f%\"\\\\]+)|([^\\x80-\\xff(){ \\x00-\\x1f\\x7f%*\"\\\\]+)"
@@ -334,7 +334,7 @@
     NSRegularExpression *addressRegex = [NSRegularExpression regularExpressionWithPattern:@"\\G(?:NIL|\"((?:[^\\x80-\\xff\\x00\\r\\n\"\\\\]|\\\\[\"\\\\])*)\") (?:NIL|\"((?:[^\\x80-\\xff\\x00\\r\\n\"\\\\]|\\\\[\"\\\\])*)\") (?:NIL|\"((?:[^\\x80-\\xff\\x00\\r\\n\"\\\\]|\\\\[\"\\\\])*)\") (?:NIL|\"((?:[^\\x80-\\xff\\x00\\r\\n\"\\\\]|\\\\[\"\\\\])*)\")\\)"
                                                                                   options:NSRegularExpressionCaseInsensitive
                                                                                     error:&error];
-    NSTextCheckingResult *match = [addressRegex firstMatchInString:self.str options:0 range:NSMakeRange(self.pos, [self.str length])];
+    NSTextCheckingResult *match = [addressRegex firstMatchInString:self.str options:0 range:NSMakeRange(self.pos, [self.str length] - self.pos)];
     NSString *aName = nil;
     NSString *aRoute = nil;
     NSString *aMailbox = nil;
