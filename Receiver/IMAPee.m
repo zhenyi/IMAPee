@@ -22,9 +22,11 @@
 @synthesize host, port;
 @synthesize tagPrefix, tagNo;
 @synthesize useSSL;
+@synthesize authenticators;
 @synthesize parser;
 @synthesize responses;
 @synthesize taggedResponses;
+@synthesize isIdleDone;
 @synthesize continuationRequestArrived;
 @synthesize responseHandlers;
 @synthesize logoutCommandTag;
@@ -232,8 +234,23 @@
 }
 
 - (TaggedResponse *) sendCommand:(NSString *)cmd withBlock:(void(^)(id))block {
-    //TODO
-    return nil;
+    NSString *tag = [self generateTag];
+    [self putString:[NSString stringWithFormat:@"%@ %@", tag, cmd]];
+    [self putString:@"\r\n"];
+    if ([cmd isEqualToString:@"LOGOUT"]) {
+        self.logoutCommandTag = tag;
+    }
+    [self addResponseHandler:block];
+    @try {
+        return [self getTaggedResponse:tag cmd:cmd];
+    }
+    @finally {
+        [self removeResponseHandler:block];
+    }
+}
+
+- (void) addAuthenticator:(NSString *)authType authenticator:(Class)authenticator {
+    [self.authenticators setObject:authenticators forKey:authType];
 }
 
 - (void) disconnect {
@@ -247,6 +264,26 @@
     [oStream release];
     iStream = nil;
     oStream = nil;
+}
+
+- (void) authenticate:(NSString *)authType user:(NSString *)user password:(NSString *)password {
+    authType = [authType uppercaseString];
+    if (![self.authenticators objectForKey:authType]) {
+        @throw [NSException exceptionWithName:@"ArgumentError"
+                                       reason:[NSString stringWithFormat:@"unknown auth type - \"%@\"", authType]
+                                     userInfo:nil];
+    }
+    Class authenticatorClass = [self.authenticators objectForKey:authType];
+    id authenticator = [[authenticatorClass alloc] initWithUser:user password:password];
+    [self sendCommand:[NSString stringWithFormat:@"%@ %@", @"AUTHENTICATE", authType] withBlock:^(id resp) {
+        if ([resp isKindOfClass:[ContinuationRequest class]]) {
+            ContinuationRequest *request = (ContinuationRequest *) resp;
+            NSString *data = [authenticator process:[NSString stringFromBase64String:request.data.text]];
+            NSString *s = [[NSString base64StringFromString:data] stringByReplacingOccurrencesOfString:@"\n" withString:@""];
+            [self sendStringData:s];
+            [self putString:@"\r\n"];
+        }
+    }];
 }
 
 - (void) recordResponse:(NSString *)name data:(id)data {
@@ -332,6 +369,10 @@
         }
         self.tagPrefix = @"PEE";
         self.tagNo = 0;
+        self.authenticators = [NSMutableDictionary dictionary];
+        [self addAuthenticator:@"LOGIN" authenticator:[LoginAuthenticator class]];
+        [self addAuthenticator:@"PLAIN" authenticator:[PlainAuthenticator class]];
+        [self addAuthenticator:@"CRAM-MD5" authenticator:[CramMD5Authenticator class]];
         self.parser = [[ResponseParser alloc] init];
         [NSStream getStreamsToHostNamed:self.host port:self.port inputStream:&iStream outputStream:&oStream];
         [iStream retain];
@@ -352,6 +393,7 @@
         self.responses = [NSMutableDictionary dictionary];
         self.taggedResponses = [NSMutableDictionary dictionary];
         self.responseHandlers = [NSMutableArray array];
+        self.isIdleDone = NO;
         self.continuationRequestArrived = NO;
         self.logoutCommandTag = nil;
         self.responseString = [NSMutableString string];
@@ -532,8 +574,15 @@
 }
 
 - (NSArray *) searchInternal:(NSString *)cmd key:(NSString *)key charset:(NSString *)charset {
-    //TODO
-    return nil;
+    RawData *dataKeys = [[[RawData alloc] initWithSomeData:key] autorelease];
+    if (charset) {
+        [self sendCommand:cmd, "CHARSET", charset, dataKeys, nil];
+    } else {
+        [self sendCommand:cmd, dataKeys, nil];
+    }
+    NSArray *results = [[[self.responses objectForKey:@"SEARCH"] lastObject] copy];
+    [self.responses removeObjectForKey:@"SEARCH"];
+    return [results autorelease];
 }
 
 - (NSArray *) search:(NSString *)key charset:(NSString *)charset {
@@ -545,8 +594,17 @@
 }
 
 - (NSArray *) fetchInternal:(NSString *)cmd set:(NSArray *)set attr:(NSArray *)attr {
-    //TODO
-    return nil;
+    NSMutableArray *rawDataArray = [NSMutableArray array];
+    for (NSString *arg in attr) {
+        RawData *data = [[[RawData alloc] initWithSomeData:arg] autorelease];
+        [rawDataArray addObject:data];
+    }
+    [self.responses removeObjectForKey:@"FETCH"];
+    MessageSet *messageSet = [[[MessageSet alloc] initWithSetData:set] autorelease];
+    [self sendCommand:cmd, messageSet, rawDataArray, nil];
+    NSArray *results = [[self.responses objectForKey:@"FETCH"] copy];
+    [self.responses removeObjectForKey:@"FETCH"];
+    return [results autorelease];
 }
 
 - (NSArray *) fetch:(NSArray *)set attr:(NSArray *)attr {
@@ -558,15 +616,16 @@
 }
 
 - (NSArray *) storeInternal:(NSString *)cmd set:(NSArray *)set attr:(NSString *)attr flags:(NSArray *)flags {
-    //TODO
-    /*
-    convert flags to symbol
     NSMutableArray *flagsArray = [NSMutableArray array];
     for (NSString *flag in flags) {
         [flagsArray addObject:[self stringToFlag:flag]];
     }
-    */
-    return nil;
+    [self.responses removeObjectForKey:@"FETCH"];
+    MessageSet *messageSet = [[[MessageSet alloc] initWithSetData:set] autorelease];
+    [self sendCommand:cmd, messageSet, attr, flagsArray, nil];
+    NSArray *results = [[self.responses objectForKey:@"FETCH"] copy];
+    [self.responses removeObjectForKey:@"FETCH"];
+    return [results autorelease];
 }
 
 - (NSArray *) store:(NSArray *)set attr:(NSString *)attr flags:(NSArray *)flags {
@@ -577,7 +636,8 @@
 }
 
 - (void) copyInternal:(NSString *)cmd set:(NSArray *)set mailbox:(NSString *)mailbox {
-    //TODO
+    MessageSet *messageSet = [[[MessageSet alloc] initWithSetData:set] autorelease];
+    [self sendCommand:cmd, messageSet, mailbox, nil];
 }
 
 - (void) copy:(NSArray *)set mailbox:(NSString *)mailbox {
@@ -588,9 +648,38 @@
     [self copyInternal:@"UID COPY" set:set mailbox:mailbox];
 }
 
+- (NSArray *) normalizeSearchingCritirea:(NSArray *)keys {
+    NSMutableArray *normalizedArray = [NSMutableArray array];
+    for (id item in keys) {
+        if ([item isKindOfClass:[NSNumber class]]) {
+            int i = [(NSNumber *) item intValue];
+            if (i == -1) {
+                MessageSet *messageSet = [[[MessageSet alloc] initWithSetData:item] autorelease];
+                [normalizedArray addObject:messageSet];
+            }
+        } else if ([item isKindOfClass:[NSArray class]]) {
+            MessageSet *messageSet = [[[MessageSet alloc] initWithSetData:item] autorelease];
+            [normalizedArray addObject:messageSet];
+        } else {
+            [normalizedArray addObject:item];
+        }
+    }
+    return normalizedArray;
+}
+
 - (NSArray *) sortInternal:(NSString *)cmd sortKeys:(NSArray *)sortKeys searchKeys:(NSArray *)searchKeys charset:(NSString *)charset {
-    //TODO
-    return nil;
+    searchKeys = [self normalizeSearchingCritirea:searchKeys];
+    searchKeys = [self normalizeSearchingCritirea:searchKeys];
+    NSMutableArray *arguments = [NSMutableArray array];
+    [arguments addObject:sortKeys];
+    [arguments addObject:charset];
+    for (id key in searchKeys) {
+        [arguments addObject:key];
+    }
+    [self sendCommand:cmd withArray:arguments];
+    NSArray *results = [[[self.responses objectForKey:@"SORT"] lastObject] copy];
+    [self.responses removeObjectForKey:@"SORT"];
+    return [results autorelease];
 }
 
 - (NSArray *) sort:(NSArray *)sortKeys searchKeys:(NSArray *)searchKeys charset:(NSString *)charset {
@@ -602,8 +691,18 @@
 }
 
 - (NSArray *) threadInternal:(NSString *)cmd algorithm:(NSString *)algorithm searchKeys:(NSArray *)searchKeys charset:(NSString *)charset {
-    //TODO
-    return nil;
+    searchKeys = [self normalizeSearchingCritirea:searchKeys];
+    searchKeys = [self normalizeSearchingCritirea:searchKeys];
+    NSMutableArray *arguments = [NSMutableArray array];
+    [arguments addObject:algorithm];
+    [arguments addObject:charset];
+    for (id key in searchKeys) {
+        [arguments addObject:key];
+    }
+    [self sendCommand:cmd withArray:arguments];
+    NSArray *results = [[[self.responses objectForKey:@"THREAD"] lastObject] copy];
+    [self.responses removeObjectForKey:@"THREAD"];
+    return [results autorelease];
 }
 
 - (NSArray *) thread:(NSString *)algorithm searchKeys:(NSArray *)searchKeys charset:(NSString *)charset {
@@ -612,6 +711,31 @@
 
 - (NSArray *) UIDThread:(NSString *)algorithm searchKeys:(NSArray *)searchKeys charset:(NSString *)charset {
     return [self threadInternal:@"UID THREAD" algorithm:algorithm searchKeys:searchKeys charset:charset];
+}
+
+- (TaggedResponse *) idleWithBlock:(void(^)(id))block {
+    TaggedResponse *response = nil;
+    NSString *tag = [self generateTag];
+    [self putString:[NSString stringWithFormat:@"%@ IDLE\r\n", tag]];
+    @try {
+        [self addResponseHandler:block];
+        NSRunLoop *runLoop = [NSRunLoop currentRunLoop];
+        while (!self.isIdleDone && [runLoop runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]]);
+        self.isIdleDone = NO;
+    }
+    @finally {
+        [self removeResponseHandler:block];
+        [self putString:@"DONE\r\n"];
+        response = [self getTaggedResponse:tag cmd:@"IDLE"];
+    }
+    return response;
+}
+
+- (void) idleDone {
+    if (self.isIdleDone) {
+        @throw [NSException exceptionWithName:@"IMAPError" reason:@"not during IDLE" userInfo:nil];
+    }
+    self.isIdleDone = YES;
 }
 
 + (NSString *) decodeUTF7:(NSString *)aString {

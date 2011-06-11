@@ -15,6 +15,10 @@
 #import "RawData.h"
 #import "StatusData.h"
 #import "Literal.h"
+#import "MessageSet.h"
+#import "PlainAuthenticator.h"
+#import "LoginAuthenticator.h"
+#import "CramMD5Authenticator.h"
 
 @interface IMAPee : NSObject <NSStreamDelegate> {
 
@@ -23,9 +27,11 @@
     NSString *tagPrefix;
     int tagNo;
     BOOL useSSL;
+    NSMutableDictionary *authenticators;
     ResponseParser *parser;
     NSMutableDictionary *responses;
     NSMutableDictionary *taggedResponses;
+    BOOL isIdleDone;
     BOOL continuationRequestArrived;
     NSMutableArray *responseHandlers;
     NSString *logoutCommandTag;
@@ -43,9 +49,11 @@
 @property (copy) NSString *tagPrefix;
 @property (assign) int tagNo;
 @property (assign) BOOL useSSL;
+@property (retain) NSMutableDictionary *authenticators;
 @property (retain) ResponseParser *parser;
 @property (retain) NSMutableDictionary *responses;
 @property (retain) NSMutableDictionary *taggedResponses;
+@property (assign) BOOL isIdleDone;
 @property (assign) BOOL continuationRequestArrived;
 @property (retain) NSMutableArray *responseHandlers;
 @property (copy) NSString *logoutCommandTag;
@@ -53,7 +61,9 @@
 @property (retain) UntaggedResponse *greeting;
 
 - (id) initWithHost:(NSString *)aHost port:(int)aPort useSSL:(BOOL)isUsingSSL;
+- (void) addAuthenticator:(NSString *)authType authenticator:(Class)authenticator;
 - (void) disconnect;
+- (void) authenticate:(NSString *)authType user:(NSString *)user password:(NSString *)password;
 - (void) addResponseHandler:(void(^)(id))block;
 - (void) removeResponseHandler:(void(^)(id))block;
 - (NSArray *) capability;
@@ -91,16 +101,11 @@
 - (NSArray *) UIDSort:(NSArray *)sortKeys searchKeys:(NSArray *)searchKeys charset:(NSString *)charset;
 - (NSArray *) thread:(NSString *)algorithm searchKeys:(NSArray *)searchKeys charset:(NSString *)charset;
 - (NSArray *) UIDThread:(NSString *)algorithm searchKeys:(NSArray *)searchKeys charset:(NSString *)charset;
+- (TaggedResponse *) idleWithBlock:(void(^)(id))block;
+- (void) idleDone;
 + (NSString *) decodeUTF7:(NSString *)aString;
 + (NSString *) encodeUTF7:(NSString *)aString;
 + (NSString *) formatDate:(NSDate *)someDate;
 + (NSString *) formatDateTime:(NSDate *)someDate;
-
-/*
- add_authenticator
- authenticate
- idle
- idle_done
-*/
 
 @end

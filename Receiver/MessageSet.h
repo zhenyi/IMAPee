@@ -18,7 +18,7 @@
 
 @property (retain) id data;
 
-- (id) initWithSomeData:(NSString *)someData;
+- (id) initWithSetData:(id)someData;
 - (void) sendData:(IMAPee *)imap;
 - (void) validate;
 
