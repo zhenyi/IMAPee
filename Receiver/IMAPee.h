@@ -21,7 +21,7 @@
 #import "CramMD5Authenticator.h"
 
 @interface IMAPee : NSObject <NSStreamDelegate> {
-
+    
     NSString *host;
     int port;
     NSString *tagPrefix;
@@ -78,6 +78,7 @@
 - (TaggedResponse *) subscribe:(NSString *)mailbox;
 - (TaggedResponse *) unsubscribe:(NSString *)mailbox;
 - (NSArray *) list:(NSString *)refName mailbox:(NSString *)mailbox;
+- (NSArray *) xlist:(NSString *)refName mailbox:(NSString *)mailbox;
 - (NSArray *) getQuotaRoot:(NSString *)mailbox;
 - (NSArray *) getQuota:(NSString *)mailbox;
 - (TaggedResponse *) setQuota:(NSString *)mailbox quota:(NSString *)quota;

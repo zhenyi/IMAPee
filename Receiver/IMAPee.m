@@ -415,6 +415,11 @@
     return self;
 }
 
+- (void) dealloc {
+    [self logout];
+    [super dealloc];
+}
+
 - (void) addResponseHandler:(void(^)(id))block {
     [self.responseHandlers addObject:block];
 }
@@ -476,6 +481,13 @@
     [self sendCommand:@"LIST", refName, mailbox, nil];
     NSArray *mailboxes = [[self.responses objectForKey:@"LIST"] copy];
     [self.responses removeObjectForKey:@"LIST"];
+    return [mailboxes autorelease];
+}
+
+- (NSArray *) xlist:(NSString *)refName mailbox:(NSString *)mailbox {
+    [self sendCommand:@"XLIST", refName, mailbox, nil];
+    NSArray *mailboxes = [[self.responses objectForKey:@"XLIST"] copy];
+    [self.responses removeObjectForKey:@"XLIST"];
     return [mailboxes autorelease];
 }
 
@@ -668,7 +680,9 @@
     searchKeys = [self normalizeSearchingCritirea:searchKeys];
     NSMutableArray *arguments = [NSMutableArray array];
     [arguments addObject:sortKeys];
-    [arguments addObject:charset];
+    if (charset) {
+        [arguments addObject:charset];
+    }
     for (id key in searchKeys) {
         [arguments addObject:key];
     }
@@ -815,6 +829,9 @@
     NSRegularExpression *crlfRegex = [NSRegularExpression regularExpressionWithPattern:@"^([^\\r\\n]*?\\r\\n)"
                                                                                options:0
                                                                                  error:&error];
+    NSRegularExpression *moreRegex = [NSRegularExpression regularExpressionWithPattern:@"\\{(\\d+)\\}\\r\\n$"
+                                                                               options:0
+                                                                                 error:&error];
     while ([iStream hasBytesAvailable]) {
         len = [iStream read:buffer maxLength:sizeof(buffer)];
         if (len > 0) {
@@ -824,23 +841,44 @@
             if (res) {
                 NSLog(@"S: %@", res);
                 [self.responseString appendString:res];
-                BOOL goOn = YES;
-                while (goOn) {
-                    NSTextCheckingResult *match = [crlfRegex firstMatchInString:self.responseString options:0
-                                                                          range:NSMakeRange(0, [self.responseString length])];
-                    if (match) {
-                        NSRange crlfRange = [match range];
-                        NSString *resultString = [self.responseString substringWithRange:crlfRange];
-                        [self.responseBuffer addObject:resultString];
-                        [self.responseString deleteCharactersInRange:crlfRange];
-                        if (self.greeting) {
-                            [self getResponse];
-                        }
-                    } else {
-                        goOn = NO;
-                    }
-                }
             }
+        }
+    }
+    BOOL goOn = YES;
+    NSMutableString *resultString = [NSMutableString string];
+    while (goOn) {
+        NSTextCheckingResult *match = [crlfRegex firstMatchInString:self.responseString
+                                                            options:0
+                                                              range:NSMakeRange(0, [self.responseString length])];
+        if (match) {
+            NSRange crlfRange = [match range];
+            [resultString appendString:[self.responseString substringWithRange:crlfRange]];
+            [self.responseString deleteCharactersInRange:crlfRange];
+            NSTextCheckingResult *moreMatch = [moreRegex firstMatchInString:resultString
+                                                                    options:0
+                                                                      range:NSMakeRange(0, [resultString length])];
+            if (moreMatch) {
+                NSRange moreRange = [moreMatch rangeAtIndex:1];
+                NSString *moreString = [resultString substringWithRange:moreRange];
+                int more = [moreString intValue];
+                NSRange appendRange = NSMakeRange(0, more);
+                if ([self.responseString length] < more) {
+                    [self.responseString insertString:resultString atIndex:0];
+                    goOn = NO;
+                    continue;
+                }
+                NSString *appendString = [self.responseString substringWithRange:appendRange];
+                [self.responseString deleteCharactersInRange:appendRange];
+                [resultString appendString:appendString];
+                continue;
+            }
+            [self.responseBuffer addObject:resultString];
+            resultString = [NSMutableString string];
+            if (self.greeting) {
+                [self getResponse];
+            }
+        } else {
+            goOn = NO;
         }
     }
 }

@@ -197,6 +197,16 @@
     return [NSNumber numberWithInt:[aToken.value intValue]];
 }
 
+- (NSString *) bigNumber {
+    Token *aToken = [self lookahead];
+    if (aToken.symbol == T_NIL) {
+        [self shiftToken];
+        return nil;
+    }
+    aToken = [self match:T_NUMBER];
+    return aToken.value;
+}
+
 - (ResponseCode *) responseTextCode {
     self.lexState = EXPR_BEG;
     [self match:T_LBRA];
@@ -614,6 +624,22 @@
     return param;
 }
 
+- (id) nilSafe:(id)anything {
+    if (anything == nil) {
+        return [NSNull null];
+    } else {
+        return anything;
+    }
+}
+
+- (id) nullToNil:(id)anything {
+    if (anything == [NSNull null]) {
+        return nil;
+    } else {
+        return anything;
+    }
+}
+
 - (NSArray *) bodyFields {
     NSDictionary *param = [self bodyFldParam];
     [self match:T_SPACE];
@@ -624,7 +650,7 @@
     NSString *enc = [self caseInsensitiveString];
     [self match:T_SPACE];
     NSNumber *size = [self number];
-    return [NSArray arrayWithObjects:param, contentId, desc, enc, size, nil];
+    return [NSArray arrayWithObjects:[self nilSafe:param], [self nilSafe:contentId], [self nilSafe:desc], [self nilSafe:enc], [self nilSafe:size], nil];
 }
 
 - (ContentDisposition *) bodyFldDsp {
@@ -747,11 +773,11 @@
     NSString *mSubType = [mediaType objectAtIndex:1];
     [self match:T_SPACE];
     NSArray *bodyFields = [self bodyFields];
-    NSDictionary *param = [bodyFields objectAtIndex:0];
-    NSString *contentId = [bodyFields objectAtIndex:1];
-    NSString *desc = [bodyFields objectAtIndex:2];
-    NSString *enc = [bodyFields objectAtIndex:3];
-    NSNumber *size = [bodyFields objectAtIndex:4];
+    NSDictionary *param = [self nullToNil:[bodyFields objectAtIndex:0]];
+    NSString *contentId = [self nullToNil:[bodyFields objectAtIndex:1]];
+    NSString *desc = [self nullToNil:[bodyFields objectAtIndex:2]];
+    NSString *enc = [self nullToNil:[bodyFields objectAtIndex:3]];
+    NSNumber *size = [self nullToNil:[bodyFields objectAtIndex:4]];
     [self match:T_SPACE];
     NSNumber *lines = [self number];
     NSArray *ext1Part = [self bodyExt1Part];
@@ -780,11 +806,11 @@
     NSString *mSubType = [mediaType objectAtIndex:1];
     [self match:T_SPACE];
     NSArray *bodyFields = [self bodyFields];
-    NSDictionary *param = [bodyFields objectAtIndex:0];
-    NSString *contentId = [bodyFields objectAtIndex:1];
-    NSString *desc = [bodyFields objectAtIndex:2];
-    NSString *enc = [bodyFields objectAtIndex:3];
-    NSNumber *size = [bodyFields objectAtIndex:4];
+    NSDictionary *param = [self nullToNil:[bodyFields objectAtIndex:0]];
+    NSString *contentId = [self nullToNil:[bodyFields objectAtIndex:1]];
+    NSString *desc = [self nullToNil:[bodyFields objectAtIndex:2]];
+    NSString *enc = [self nullToNil:[bodyFields objectAtIndex:3]];
+    NSNumber *size = [self nullToNil:[bodyFields objectAtIndex:4]];
     [self match:T_SPACE];
     Envelope *env = [self envelope];
     [self match:T_SPACE];
@@ -821,11 +847,11 @@
     }
     [self match:T_SPACE];
     NSArray *bodyFields = [self bodyFields];
-    NSDictionary *param = [bodyFields objectAtIndex:0];
-    NSString *contentId = [bodyFields objectAtIndex:1];
-    NSString *desc = [bodyFields objectAtIndex:2];
-    NSString *enc = [bodyFields objectAtIndex:3];
-    NSNumber *size = [bodyFields objectAtIndex:4];
+    NSDictionary *param = [self nullToNil:[bodyFields objectAtIndex:0]];
+    NSString *contentId = [self nullToNil:[bodyFields objectAtIndex:1]];
+    NSString *desc = [self nullToNil:[bodyFields objectAtIndex:2]];
+    NSString *enc = [self nullToNil:[bodyFields objectAtIndex:3]];
+    NSNumber *size = [self nullToNil:[bodyFields objectAtIndex:4]];
     NSArray *ext1Part = [self bodyExt1Part];
     NSString *md5 = nil;
     ContentDisposition *disposition = nil;
@@ -849,12 +875,12 @@
 - (id) bodyType1Part {
     Token *aToken = [self lookahead];
     NSError *error = NULL;
-    NSRegularExpression *textRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:TEXT)\\z"
+    NSRegularExpression *textRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A\"(?:TEXT)\"\\z"
                                                                                options:NSRegularExpressionCaseInsensitive
                                                                                  error:&error];
-    NSRegularExpression *messageRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:MESSAGE)\\z"
-                                                                              options:NSRegularExpressionCaseInsensitive
-                                                                                error:&error];
+    NSRegularExpression *messageRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A\"(?:MESSAGE)\"\\z"
+                                                                                  options:NSRegularExpressionCaseInsensitive
+                                                                                    error:&error];
     if ([textRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
         return [self bodyTypeText];
     } else if ([messageRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
@@ -925,7 +951,7 @@
 - (id) body {
     self.lexState = EXPR_DATA;
     Token *aToken = [self lookahead];
-    id result = nil;
+    id result;
     if (aToken.symbol == T_NIL) {
         [self shiftToken];
         result = nil;
@@ -969,6 +995,13 @@
     return [NSDictionary dictionaryWithObjects:[NSArray arrayWithObject:[self number]] forKeys:[NSArray arrayWithObject:aName]];
 }
 
+- (NSDictionary *) threadIdData {
+    Token *aToken = [self match:T_ATOM];
+    NSString *aName = [aToken.value uppercaseString];
+    [self match:T_SPACE];
+    return [NSDictionary dictionaryWithObjects:[NSArray arrayWithObject:[self bigNumber]] forKeys:[NSArray arrayWithObject:aName]];
+}
+
 - (NSDictionary *) msgAtt {
     [self match:T_LPAR];
     NSDictionary *attr = nil;
@@ -992,7 +1025,7 @@
             NSRegularExpression *envelopeRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:ENVELOPE)\\z"
                                                                                            options:NSRegularExpressionCaseInsensitive
                                                                                              error:&error];
-            NSRegularExpression *flagsRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:FLAGS)\\z"
+            NSRegularExpression *flagsRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:FLAGS|X-GM-LABELS)\\z"
                                                                                         options:NSRegularExpressionCaseInsensitive
                                                                                           error:&error];
             NSRegularExpression *internalDateRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:INTERNALDATE)\\z"
@@ -1010,6 +1043,9 @@
             NSRegularExpression *uidRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:UID)\\z"
                                                                                       options:NSRegularExpressionCaseInsensitive
                                                                                         error:&error];
+            NSRegularExpression *threadIdRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:X-GM-THRID)\\z"
+                                                                                           options:NSRegularExpressionCaseInsensitive
+                                                                                             error:&error];
             if ([envelopeRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
                 attr = [self envelopeData];
             } else if ([flagsRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
@@ -1024,6 +1060,8 @@
                 attr = [self bodyData];
             } else if ([uidRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
                 attr = [self uidData];
+            } else if ([threadIdRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
+                attr = [self threadIdData];
             } else {
                 [self parseError:[NSString stringWithFormat:@"unknown attribute %@", aToken.value]];
             }
@@ -1426,22 +1464,22 @@
                                                                                    options:NSRegularExpressionCaseInsensitive error:&error];
         NSRegularExpression *flagsRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:FLAGS)\\z"
                                                                                     options:NSRegularExpressionCaseInsensitive error:&error];
-        NSRegularExpression *listRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:LIST|LSUB)\\z"
+        NSRegularExpression *listRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:LIST|LSUB|XLIST)\\z"
                                                                                    options:NSRegularExpressionCaseInsensitive error:&error];
         NSRegularExpression *quotaRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:QUOTA)\\z"
-                                                                                   options:NSRegularExpressionCaseInsensitive error:&error];
-        NSRegularExpression *quotaRootRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:QUOTAROOT)\\z"
                                                                                     options:NSRegularExpressionCaseInsensitive error:&error];
-        NSRegularExpression *aclRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:ACL)\\z"
+        NSRegularExpression *quotaRootRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:QUOTAROOT)\\z"
                                                                                         options:NSRegularExpressionCaseInsensitive error:&error];
-        NSRegularExpression *searchRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:SEARCH|SORT)\\z"
+        NSRegularExpression *aclRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:ACL)\\z"
                                                                                   options:NSRegularExpressionCaseInsensitive error:&error];
+        NSRegularExpression *searchRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:SEARCH|SORT)\\z"
+                                                                                     options:NSRegularExpressionCaseInsensitive error:&error];
         NSRegularExpression *threadRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:THREAD)\\z"
                                                                                      options:NSRegularExpressionCaseInsensitive error:&error];
         NSRegularExpression *statusRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:STATUS)\\z"
                                                                                      options:NSRegularExpressionCaseInsensitive error:&error];
         NSRegularExpression *capabilityRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:CAPABILITY)\\z"
-                                                                                     options:NSRegularExpressionCaseInsensitive error:&error];
+                                                                                         options:NSRegularExpressionCaseInsensitive error:&error];
         if ([condRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
             return [self responseCond];
         } else if ([flagsRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
@@ -1518,8 +1556,8 @@
 - (Token *) tokenForBeg {
     NSError *error = NULL;
     NSRegularExpression *begRegex = [NSRegularExpression regularExpressionWithPattern:@"\\G(?:( +)|(NIL)(?=[\\x80-\\xff(){ \\x00-\\x1f\\x7f%*\"\\\\\\[\\]+])|(\\d+)(?=[\\x80-\\xff(){ \\x00-\\x1f\\x7f%*\"\\\\\\[\\]+])|([^\\x80-\\xff(){ \\x00-\\x1f\\x7f%*\"\\\\\\[\\]+]+)|\"((?:[^\\x00\\r\\n\"\\\\]|\\\\[\"\\\\])*)\"|(\\()|(\\))|(\\\\)|(\\*)|(\\[)|(\\])|\\{(\\d+)\\}\\r\\n|(\\+)|(%)|(\\r\\n)|(\\z))"
-                                                                                  options:NSRegularExpressionCaseInsensitive
-                                                                                    error:&error];
+                                                                              options:NSRegularExpressionCaseInsensitive
+                                                                                error:&error];
     NSTextCheckingResult *match = [begRegex firstMatchInString:self.str
                                                        options:0
                                                          range:NSMakeRange(self.pos, [self.str length] - self.pos)];
@@ -1661,7 +1699,9 @@
             return [[[Token alloc] initWithSymbol:T_RBRA
                                             value:[self.str substringWithRange:[match rangeAtIndex:(numberOfRanges - 1)]]] autorelease];
         } else if (literalString) {
-            int len = [[self.str substringWithRange:[match rangeAtIndex:(numberOfRanges - 1)]] intValue];
+            NSString *literal = [self.str substringWithRange:[match rangeAtIndex:(numberOfRanges - 1)]];
+            literal = [literal substringWithRange:NSMakeRange(1, [literal length] - 1)];
+            int len = [literal intValue];
             NSString *val = [self.str substringWithRange:NSMakeRange(self.pos, len)];
             self.pos += len;
             return [[[Token alloc] initWithSymbol:T_LITERAL
@@ -1684,8 +1724,8 @@
         }
     } else {
         NSRegularExpression *errorRegex = [NSRegularExpression regularExpressionWithPattern:@"\\S*"
-                                                                                  options:0
-                                                                                    error:&error];
+                                                                                    options:0
+                                                                                      error:&error];
         NSTextCheckingResult *errorMatch = [errorRegex firstMatchInString:self.str
                                                                   options:0
                                                                     range:NSMakeRange(self.pos, [self.str length] - self.pos)];
@@ -1697,8 +1737,8 @@
 - (Token *) tokenForData {
     NSError *error = NULL;
     NSRegularExpression *dataRegex = [NSRegularExpression regularExpressionWithPattern:@"\\G(?:( )|(NIL)|(\\d+)|\"((?:[^\\x00\\r\\n\"\\\\]|\\\\[\"\\\\])*)\"|\\{(\\d+)\\}\\r\\n|(\\()|(\\)))"
-                                                                              options:NSRegularExpressionCaseInsensitive
-                                                                                error:&error];
+                                                                               options:NSRegularExpressionCaseInsensitive
+                                                                                 error:&error];
     NSTextCheckingResult *match = [dataRegex firstMatchInString:self.str
                                                         options:0
                                                           range:NSMakeRange(self.pos, [self.str length] - self.pos)];
@@ -1765,7 +1805,9 @@
             return [[[Token alloc] initWithSymbol:T_QUOTED
                                             value:lastMatch] autorelease];
         } else if (literalString) {
-            int len = [[self.str substringWithRange:[match rangeAtIndex:(numberOfRanges - 1)]] intValue];
+            NSString *literal = [self.str substringWithRange:[match rangeAtIndex:(numberOfRanges - 1)]];
+            literal = [literal substringWithRange:NSMakeRange(1, [literal length] - 1)];
+            int len = [literal intValue];
             NSString *val = [self.str substringWithRange:NSMakeRange(self.pos, len)];
             self.pos += len;
             return [[[Token alloc] initWithSymbol:T_LITERAL
@@ -1831,8 +1873,8 @@
 - (Token *) tokenForRText {
     NSError *error = NULL;
     NSRegularExpression *rTextRegex = [NSRegularExpression regularExpressionWithPattern:@"\\G(?:(\\[)|([^\\x00\\r\\n]*))"
-                                                                               options:NSRegularExpressionCaseInsensitive
-                                                                                 error:&error];
+                                                                                options:NSRegularExpressionCaseInsensitive
+                                                                                  error:&error];
     NSTextCheckingResult *match = [rTextRegex firstMatchInString:self.str
                                                          options:0
                                                            range:NSMakeRange(self.pos, [self.str length] - self.pos)];
@@ -1876,8 +1918,8 @@
 - (Token *) tokenForCText {
     NSError *error = NULL;
     NSRegularExpression *cTextRegex = [NSRegularExpression regularExpressionWithPattern:@"\\G(?:([^\\x00\\r\\n\\]]*))"
-                                                                               options:NSRegularExpressionCaseInsensitive
-                                                                                 error:&error];
+                                                                                options:NSRegularExpressionCaseInsensitive
+                                                                                  error:&error];
     NSTextCheckingResult *match = [cTextRegex firstMatchInString:self.str
                                                          options:0
                                                            range:NSMakeRange(self.pos, [self.str length] - self.pos)];
