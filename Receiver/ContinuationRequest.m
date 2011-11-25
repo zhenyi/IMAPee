@@ -13,4 +13,10 @@
 @synthesize data;
 @synthesize rawData;
 
+- (void) dealloc {
+    [data release];
+    [rawData release];
+    [super dealloc];
+}
+
 @end

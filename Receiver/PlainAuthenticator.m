@@ -21,6 +21,12 @@
     return self;
 }
 
+- (void) dealloc {
+    [user release];
+    [password release];
+    [super dealloc];
+}
+
 - (NSString *) process:(NSString *)data {
     return [NSString stringWithFormat:@"\0%@\0%@", self.user, self.password];
 }

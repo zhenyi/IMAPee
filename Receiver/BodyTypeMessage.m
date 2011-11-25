@@ -14,7 +14,7 @@
 @synthesize subtype;
 @synthesize param;
 @synthesize contentId;
-@synthesize description;
+@synthesize contentDescription;
 @synthesize encoding;
 @synthesize size;
 @synthesize envelope;
@@ -25,13 +25,13 @@
 @synthesize languages;
 @synthesize extentions;
 
-- (id) initWithMediaType:(NSString *)aMediaType subtype:(NSString *)aSubtype param:(NSDictionary *)aParam contentId:(NSString *)aContentId description:(NSString *)aDescription encoding:(NSString *)anEncoding size:(NSNumber *)aSize envelope:(Envelope *)anEnvelope body:(id)aBody lines:(NSNumber *)aLine MD5:(NSString *)aMD5 disposition:(ContentDisposition *)aDisposition languages:(NSArray *)someLanguages extentions:(NSArray *)someExtentions {
+- (id) initWithMediaType:(NSString *)aMediaType subtype:(NSString *)aSubtype param:(NSDictionary *)aParam contentId:(NSString *)aContentId contentDescription:(NSString *)aContentDescription encoding:(NSString *)anEncoding size:(NSNumber *)aSize envelope:(Envelope *)anEnvelope body:(id)aBody lines:(NSNumber *)aLine MD5:(NSString *)aMD5 disposition:(ContentDisposition *)aDisposition languages:(NSArray *)someLanguages extentions:(NSArray *)someExtentions {
     if ((self = [super init])) {
         self.mediaType = aMediaType;
         self.subtype = aSubtype;
         self.param = aParam;
         self.contentId = aContentId;
-        self.description = aDescription;
+        self.contentDescription = aContentDescription;
         self.encoding = anEncoding;
         self.size = aSize;
         self.envelope = anEnvelope;
@@ -43,6 +43,24 @@
         self.extentions = someExtentions;
     }
     return self;
+}
+
+- (void) dealloc {
+    [mediaType release];
+    [subtype release];
+    [param release];
+    [contentId release];
+    [contentDescription release];
+    [encoding release];
+    [size release];
+    [envelope release];
+    [body release];
+    [lines release];
+    [MD5 release];
+    [disposition release];
+    [languages release];
+    [extentions release];
+    [super dealloc];
 }
 
 - (BOOL) isMultipart {

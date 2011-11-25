@@ -14,4 +14,11 @@
 @synthesize delim;
 @synthesize name;
 
+- (void) dealloc {
+    [attr release];
+    [delim release];
+    [name release];
+    [super dealloc];
+}
+
 @end

@@ -13,4 +13,10 @@
 @synthesize mailbox;
 @synthesize attr;
 
+- (void) dealloc {
+    [mailbox release];
+    [attr release];
+    [super dealloc];
+}
+
 @end

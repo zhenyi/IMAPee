@@ -13,4 +13,10 @@
 @synthesize user;
 @synthesize rights;
 
+- (void) dealloc {
+    [user release];
+    [rights release];
+    [super dealloc];
+}
+
 @end

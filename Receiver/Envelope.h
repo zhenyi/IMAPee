@@ -21,7 +21,7 @@
     NSArray *bcc;
     NSString *inReplyTo;
     NSString *messageId;
-
+    
 }
 
 @property (copy) NSString *date;

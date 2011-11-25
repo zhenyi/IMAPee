@@ -13,4 +13,9 @@
 @synthesize seqno;
 @synthesize attr;
 
+- (void) dealloc {
+    [attr release];
+    [super dealloc];
+}
+
 @end

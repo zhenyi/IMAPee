@@ -14,4 +14,9 @@
 @synthesize usage;
 @synthesize quota;
 
+- (void) dealloc {
+    [mailbox release];
+    [super dealloc];
+}
+
 @end

@@ -25,6 +25,12 @@
     return self;
 }
 
+- (void) dealloc {
+    [user release];
+    [password release];
+    [super dealloc];
+}
+
 - (NSString *) process:(NSString *)data {
     switch (self.state) {
         case STATE_USER: {

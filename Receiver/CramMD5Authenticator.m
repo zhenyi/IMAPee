@@ -21,6 +21,12 @@
     return self;
 }
 
+- (void) dealloc {
+    [user release];
+    [password release];
+    [super dealloc];
+}
+
 #define CRAM_BUFSIZE 64
 #define IMASK 0x36
 #define OMASK 0x5c

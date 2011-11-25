@@ -31,8 +31,27 @@
     return self;
 }
 
+- (void) dealloc {
+    [mediaType release];
+    [subtype release];
+    [parts release];
+    [param release];
+    [disposition release];
+    [languages release];
+    [extentions release];
+    [super dealloc];
+}
+
 - (BOOL) isMultipart {
     return YES;
+}
+
+- (NSString *) description {
+    NSMutableString *partDescription = [NSMutableString string];
+    for (id part in self.parts) {
+        [partDescription appendString:[NSString stringWithFormat:@"%@\n\n", [part description]]];
+    }
+    return [NSString stringWithFormat:@"BodyTypeMultipart:\nmediaType=%@\nsubtype=%@\nparam=%@\ndisposition=%@\nlanguages=%@\nextentions=%@\n\nparts=%@", self.mediaType, self.subtype, self.param, self.disposition, self.languages, self.extentions, partDescription];
 }
 
 @end

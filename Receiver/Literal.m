@@ -19,6 +19,11 @@
     return self;
 }
 
+- (void) dealloc {
+    [data release];
+    [super dealloc];
+}
+
 - (void) sendData:(IMAPee *)imap {
     [imap performSelector:@selector(sendLiteral:) withObject:self.data];
 }

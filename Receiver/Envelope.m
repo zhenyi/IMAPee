@@ -21,4 +21,18 @@
 @synthesize inReplyTo;
 @synthesize messageId;
 
+- (void) dealloc {
+    [date release];
+    [subject release];
+    [from release];
+    [sender release];
+    [replyTo release];
+    [to release];
+    [cc release];
+    [bcc release];
+    [inReplyTo release];
+    [messageId release];
+    [super dealloc];
+}
+
 @end

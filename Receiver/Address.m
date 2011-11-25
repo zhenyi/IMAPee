@@ -15,4 +15,12 @@
 @synthesize mailbox;
 @synthesize host;
 
+- (void) dealloc {
+    [name release];
+    [route release];
+    [mailbox release];
+    [host release];
+    [super dealloc];
+}
+
 @end

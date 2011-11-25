@@ -13,4 +13,14 @@
 @synthesize dspType;
 @synthesize param;
 
+- (void) dealloc {
+    [dspType release];
+    [param release];
+    [super dealloc];
+}
+
+- (NSString *) description {
+    return [NSString stringWithFormat:@"ContentDisposition: dspType=%@, param=%@", self.dspType, self.param];
+}
+
 @end

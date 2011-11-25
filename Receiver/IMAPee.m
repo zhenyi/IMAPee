@@ -65,7 +65,7 @@
     }
     TaggedResponse *resp = [[self.taggedResponses objectForKey:tag] retain];
     [self.taggedResponses removeObjectForKey:tag];
-    NSError *error = NULL;
+    NSError *error = nil;
     NSRegularExpression *noRespRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:NO)\\z"
                                                                                  options:NSRegularExpressionCaseInsensitive
                                                                                    error:&error];
@@ -84,7 +84,7 @@
 }
 
 - (void) sendSymbol:(NSString *)str {
-    NSError *error = NULL;
+    NSError *error = nil;
     NSRegularExpression *symbolRegex = [NSRegularExpression regularExpressionWithPattern:@"^\\\\"
                                                                                  options:0
                                                                                    error:&error];
@@ -107,7 +107,7 @@
 }
 
 - (void) sendQuotedString:(NSString *)str {
-    NSError *error = NULL;
+    NSError *error = nil;
     NSRegularExpression *quotedRegex = [NSRegularExpression regularExpressionWithPattern:@"([\"\\\\])"
                                                                                  options:0
                                                                                    error:&error];
@@ -119,7 +119,7 @@
 }
 
 - (void) sendStringData:(NSString *)str {
-    NSError *error = NULL;
+    NSError *error = nil;
     NSRegularExpression *symbolRegex = [NSRegularExpression regularExpressionWithPattern:@"^\\\\\\\\"
                                                                                  options:0
                                                                                    error:&error];
@@ -250,7 +250,7 @@
 }
 
 - (void) addAuthenticator:(NSString *)authType authenticator:(Class)authenticator {
-    [self.authenticators setObject:authenticators forKey:authType];
+    [self.authenticators setObject:authenticator forKey:authType];
 }
 
 - (void) disconnect {
@@ -344,6 +344,7 @@
         NSString *first = [[self.responseBuffer objectAtIndex:0] copy];
         [self.responseBuffer removeObjectAtIndex:0];
         [self receiveResponses:first];
+        [first release];
     }
 }
 
@@ -352,7 +353,7 @@
     while ([self.responseBuffer count] == 0 && [runLoop runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]]);
     NSString *first = [[self.responseBuffer objectAtIndex:0] copy];
     [self.responseBuffer removeObjectAtIndex:0];
-    return [self.parser parse:first];
+    return [self.parser parse:[first autorelease]];
 }
 
 - (id) initWithHost:(NSString *)aHost port:(int)aPort useSSL:(BOOL)isUsingSSL {
@@ -369,7 +370,7 @@
         [self addAuthenticator:@"LOGIN" authenticator:[LoginAuthenticator class]];
         [self addAuthenticator:@"PLAIN" authenticator:[PlainAuthenticator class]];
         [self addAuthenticator:@"CRAM-MD5" authenticator:[CramMD5Authenticator class]];
-        self.parser = [[ResponseParser alloc] init];
+        self.parser = [[[ResponseParser alloc] init] autorelease];
         [NSStream getStreamsToHostNamed:self.host port:self.port inputStream:&iStream outputStream:&oStream];
         [iStream retain];
         [oStream retain];
@@ -417,6 +418,19 @@
 
 - (void) dealloc {
     [self logout];
+    [self disconnect];
+    [host release];
+    [tagPrefix release];
+    [authenticators release];
+    [parser release];
+    [responses release];
+    [taggedResponses release];
+    [responseHandlers release];
+    [logoutCommandTag release];
+    [exception release];
+    [greeting release];
+    [responseBuffer release];
+    [responseString release];
     [super dealloc];
 }
 
@@ -749,7 +763,7 @@
 }
 
 + (NSString *) decodeUTF7:(NSString *)aString {
-    NSError *error = NULL;
+    NSError *error = nil;
     NSRegularExpression *decodeUTF7Regex = [NSRegularExpression regularExpressionWithPattern:@"&(.*?)-"
                                                                                      options:0
                                                                                        error:&error];
@@ -778,7 +792,7 @@
 }
 
 + (NSString *) encodeUTF7:(NSString *)aString {
-    NSError *error = NULL;
+    NSError *error = nil;
     NSRegularExpression *encodeUTF7Regex = [NSRegularExpression regularExpressionWithPattern:@"(&)|([^\\x20-\\x25\\x27-\\x7e]+)"
                                                                                      options:0
                                                                                        error:&error];
@@ -825,7 +839,7 @@
 - (void) parseInputStream {
     uint8_t buffer[1024];
     int len;
-    NSError *error = NULL;
+    NSError *error = nil;
     NSRegularExpression *crlfRegex = [NSRegularExpression regularExpressionWithPattern:@"^([^\\r\\n]*?\\r\\n)"
                                                                                options:0
                                                                                  error:&error];

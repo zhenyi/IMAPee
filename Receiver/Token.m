@@ -21,4 +21,9 @@
     return self;
 }
 
+- (void) dealloc {
+    [value release];
+    [super dealloc];
+}
+
 @end

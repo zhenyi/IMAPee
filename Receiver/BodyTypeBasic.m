@@ -14,7 +14,7 @@
 @synthesize subtype;
 @synthesize param;
 @synthesize contentId;
-@synthesize description;
+@synthesize contentDescription;
 @synthesize encoding;
 @synthesize size;
 @synthesize MD5;
@@ -22,13 +22,13 @@
 @synthesize languages;
 @synthesize extentions;
 
-- (id) initWithMediaType:(NSString *)aMediaType subtype:(NSString *)aSubtype param:(NSDictionary *)aParam contentId:(NSString *)aContentId description:(NSString *)aDescription encoding:(NSString *)anEncoding size:(NSNumber *)aSize MD5:(NSString *)aMD5 disposition:(ContentDisposition *)aDisposition languages:(NSArray *)someLanguages extentions:(NSArray *)someExtentions {
+- (id) initWithMediaType:(NSString *)aMediaType subtype:(NSString *)aSubtype param:(NSDictionary *)aParam contentId:(NSString *)aContentId contentDescription:(NSString *)aContentDescription encoding:(NSString *)anEncoding size:(NSNumber *)aSize MD5:(NSString *)aMD5 disposition:(ContentDisposition *)aDisposition languages:(NSArray *)someLanguages extentions:(NSArray *)someExtentions {
     if ((self = [super init])) {
         self.mediaType = aMediaType;
         self.subtype = aSubtype;
         self.param = aParam;
         self.contentId = aContentId;
-        self.description = aDescription;
+        self.contentDescription = aContentDescription;
         self.encoding = anEncoding;
         self.size = aSize;
         self.MD5 = aMD5;
@@ -39,12 +39,31 @@
     return self;
 }
 
+- (void) dealloc {
+    [mediaType release];
+    [subtype release];
+    [param release];
+    [contentId release];
+    [contentDescription release];
+    [encoding release];
+    [size release];
+    [MD5 release];
+    [disposition release];
+    [languages release];
+    [extentions release];
+    [super dealloc];
+}
+
 - (id) initWithMediaType:(NSString *)aMediaType subtype:(NSString *)aSubtype {
-    return [self initWithMediaType:aMediaType subtype:aSubtype param:nil contentId:nil description:nil encoding:nil size:nil MD5:nil disposition:nil languages:nil extentions:nil];
+    return [self initWithMediaType:aMediaType subtype:aSubtype param:nil contentId:nil contentDescription:nil encoding:nil size:nil MD5:nil disposition:nil languages:nil extentions:nil];
 }
 
 - (BOOL) isMultipart {
     return NO;
+}
+
+- (NSString *) description {
+    return [NSString stringWithFormat:@"BodyTypeBasic:\nmediaType=%@\nsubtype=%@\nparam=%@\ncontentId=%@\ncontentDescription=%@\nencoding=%@\nsize=%@\nMD5=%@\ndisposition=%@\nlanguages=%@\nextentions=%@", self.mediaType, self.subtype, self.param, self.contentId, self.contentDescription, self.encoding, self.size, self.MD5, self.disposition, self.languages, self.extentions];
 }
 
 @end

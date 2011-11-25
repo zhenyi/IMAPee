@@ -58,6 +58,13 @@
     return self;
 }
 
+- (void) dealloc {
+    [str release];
+    [token release];
+    [flagSymbols release];
+    [super dealloc];
+}
+
 - (Token *) lookahead {
     if (!self.token) {
         self.token = [self nextToken];
@@ -148,7 +155,7 @@
 
 - (NSArray *) flagList {
     NSMutableArray *flags = [NSMutableArray array];
-    NSError *error = NULL;
+    NSError *error = nil;
     NSRegularExpression *bracketRegex = [NSRegularExpression regularExpressionWithPattern:@"\\(([^)]*)\\)"
                                                                                   options:NSRegularExpressionCaseInsensitive error:&error];
     if ([bracketRegex numberOfMatchesInString:self.str options:0 range:NSMakeRange(self.pos, [self.str length] - self.pos)]) {
@@ -213,7 +220,7 @@
     Token *aToken = [self match:T_ATOM];
     NSString *aName = [aToken.value uppercaseString];
     ResponseCode *result = nil;
-    NSError *error = NULL;
+    NSError *error = nil;
     NSRegularExpression *nilRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:ALERT|PARSE|READ-ONLY|READ-WRITE|TRYCREATE|NOMODSEQ)\\z" 
                                                                               options:0 error:&error];
     NSRegularExpression *flagRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:PERMANENTFLAGS)\\z"
@@ -257,12 +264,12 @@
 
 - (ResponseText *) responseText {
     self.lexState = EXPR_RTEXT;
-    Token *aToken = [self lookahead];
+    [self lookahead];
     ResponseCode *code = nil;
     if (token.symbol == T_LBRA) {
         code = [self responseTextCode];
     }
-    aToken = [self match:T_TEXT];
+    Token *aToken = [self match:T_TEXT];
     self.lexState = EXPR_BEG;
     ResponseText *text = [[ResponseText alloc] init];
     text.code = code;
@@ -340,7 +347,7 @@
 
 - (Address *) address {
     [self match:T_LPAR];
-    NSError *error = NULL;
+    NSError *error = nil;
     NSRegularExpression *addressRegex = [NSRegularExpression regularExpressionWithPattern:@"\\G(?:NIL|\"((?:[^\\x80-\\xff\\x00\\r\\n\"\\\\]|\\\\[\"\\\\])*)\") (?:NIL|\"((?:[^\\x80-\\xff\\x00\\r\\n\"\\\\]|\\\\[\"\\\\])*)\") (?:NIL|\"((?:[^\\x80-\\xff\\x00\\r\\n\"\\\\]|\\\\[\"\\\\])*)\") (?:NIL|\"((?:[^\\x80-\\xff\\x00\\r\\n\"\\\\]|\\\\[\"\\\\])*)\")\\)"
                                                                                   options:NSRegularExpressionCaseInsensitive
                                                                                     error:&error];
@@ -428,6 +435,7 @@
     Envelope *result = [[Envelope alloc] init];
     if (aToken.symbol == T_NIL) {
         [self shiftToken];
+        [result release];
         result = nil;
     } else {
         [self match:T_LPAR];
@@ -506,7 +514,7 @@
     if ([someString isEqualToString:@""]) {
         return @"\"\"";
     } else {
-        NSError *error = NULL;
+        NSError *error = nil;
         NSRegularExpression *literalRegex = [NSRegularExpression regularExpressionWithPattern:@"[\\x80-\\xff\\r\\n]"
                                                                                       options:0
                                                                                         error:&error];
@@ -754,17 +762,17 @@
     if (aToken.symbol == T_SPACE) {
         [self shiftToken];
     } else {
-        return [NSArray arrayWithObjects:md5, disposition, nil];
+        return [NSArray arrayWithObjects:[self nilSafe:md5], [self nilSafe:disposition], nil];
     }
     NSArray *languages = [self bodyFldLang];
     aToken = [self lookahead];
     if (aToken.symbol == T_SPACE) {
         [self shiftToken];
     } else {
-        return [NSArray arrayWithObjects:md5, disposition, languages, nil];
+        return [NSArray arrayWithObjects:[self nilSafe:md5], [self nilSafe:disposition], [self nilSafe:languages], nil];
     }
     NSArray *extentions = [self bodyExtentions];
-    return [NSArray arrayWithObjects:md5, disposition, languages, extentions, nil];
+    return [NSArray arrayWithObjects:[self nilSafe:md5], [self nilSafe:disposition], [self nilSafe:languages], [self nilSafe:extentions], nil];
 }
 
 - (BodyTypeText *) bodyTypeText {
@@ -786,18 +794,18 @@
     NSArray *languages = nil;
     NSArray *extentions = nil;
     if ([ext1Part count] > 0) {
-        md5 = [ext1Part objectAtIndex:0];
+        md5 = [self nullToNil:[ext1Part objectAtIndex:0]];
     }
     if ([ext1Part count] > 1) {
-        disposition = [ext1Part objectAtIndex:1];
+        disposition = [self nullToNil:[ext1Part objectAtIndex:1]];
     }
     if ([ext1Part count] > 2) {
-        languages = [ext1Part objectAtIndex:2];
+        languages = [self nullToNil:[ext1Part objectAtIndex:2]];
     }
     if ([ext1Part count] > 3) {
-        extentions = [ext1Part objectAtIndex:3];
+        extentions = [self nullToNil:[ext1Part objectAtIndex:3]];
     }
-    return [[[BodyTypeText alloc] initWithMediaType:mType subtype:mSubType param:param contentId:contentId description:desc encoding:enc size:size lines:lines MD5:md5 disposition:disposition languages:languages extentions:extentions] autorelease];
+    return [[[BodyTypeText alloc] initWithMediaType:mType subtype:mSubType param:param contentId:contentId contentDescription:desc encoding:enc size:size lines:lines MD5:md5 disposition:disposition languages:languages extentions:extentions] autorelease];
 }
 
 - (BodyTypeMessage *) bodyTypeMessage {
@@ -823,18 +831,18 @@
     NSArray *languages = nil;
     NSArray *extentions = nil;
     if ([ext1Part count] > 0) {
-        md5 = [ext1Part objectAtIndex:0];
+        md5 = [self nullToNil:[ext1Part objectAtIndex:0]];
     }
     if ([ext1Part count] > 1) {
-        disposition = [ext1Part objectAtIndex:1];
+        disposition = [self nullToNil:[ext1Part objectAtIndex:1]];
     }
     if ([ext1Part count] > 2) {
-        languages = [ext1Part objectAtIndex:2];
+        languages = [self nullToNil:[ext1Part objectAtIndex:2]];
     }
     if ([ext1Part count] > 3) {
-        extentions = [ext1Part objectAtIndex:3];
+        extentions = [self nullToNil:[ext1Part objectAtIndex:3]];
     }
-    return [[[BodyTypeMessage alloc] initWithMediaType:mType subtype:mSubType param:param contentId:contentId description:desc encoding:enc size:size envelope:env body:b lines:lines MD5:md5 disposition:disposition languages:languages extentions:extentions] autorelease];
+    return [[[BodyTypeMessage alloc] initWithMediaType:mType subtype:mSubType param:param contentId:contentId contentDescription:desc encoding:enc size:size envelope:env body:b lines:lines MD5:md5 disposition:disposition languages:languages extentions:extentions] autorelease];
 }
 
 - (BodyTypeBasic *) bodyTypeBasic {
@@ -858,23 +866,23 @@
     NSArray *languages = nil;
     NSArray *extentions = nil;
     if ([ext1Part count] > 0) {
-        md5 = [ext1Part objectAtIndex:0];
+        md5 = [self nullToNil:[ext1Part objectAtIndex:0]];
     }
     if ([ext1Part count] > 1) {
-        disposition = [ext1Part objectAtIndex:1];
+        disposition = [self nullToNil:[ext1Part objectAtIndex:1]];
     }
     if ([ext1Part count] > 2) {
-        languages = [ext1Part objectAtIndex:2];
+        languages = [self nullToNil:[ext1Part objectAtIndex:2]];
     }
     if ([ext1Part count] > 3) {
-        extentions = [ext1Part objectAtIndex:3];
+        extentions = [self nullToNil:[ext1Part objectAtIndex:3]];
     }
-    return [[[BodyTypeBasic alloc] initWithMediaType:mType subtype:mSubType param:param contentId:contentId description:desc encoding:enc size:size MD5:md5 disposition:disposition languages:languages extentions:extentions] autorelease];
+    return [[[BodyTypeBasic alloc] initWithMediaType:mType subtype:mSubType param:param contentId:contentId contentDescription:desc encoding:enc size:size MD5:md5 disposition:disposition languages:languages extentions:extentions] autorelease];
 }
 
 - (id) bodyType1Part {
     Token *aToken = [self lookahead];
-    NSError *error = NULL;
+    NSError *error = nil;
     NSRegularExpression *textRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A\"(?:TEXT)\"\\z"
                                                                                options:NSRegularExpressionCaseInsensitive
                                                                                  error:&error];
@@ -911,10 +919,10 @@
     if (aToken.symbol == T_SPACE) {
         [self shiftToken];
     } else {
-        return [NSArray arrayWithObjects:param, disposition, languages, nil];
+        return [NSArray arrayWithObjects:[self nilSafe:param], [self nilSafe:disposition], [self nilSafe:languages], nil];
     }
     NSArray *extentions = [self bodyExtentions];
-    return [NSArray arrayWithObjects:param, disposition, languages, extentions, nil];
+    return [NSArray arrayWithObjects:[self nilSafe:param], [self nilSafe:disposition], [self nilSafe:languages], [self nilSafe:extentions], nil];
 }
 
 - (BodyTypeMultipart *) bodyTypeMPart {
@@ -934,16 +942,16 @@
     NSString *mType = @"MULTIPART";
     NSString *mSubType = [self caseInsensitiveString];
     NSArray *extArray = [self bodyExtMPart];
-    NSDictionary *param = [extArray objectAtIndex:0];
+    NSDictionary *param = [self nullToNil:[extArray objectAtIndex:0]];
     ContentDisposition *disposition = nil;
     NSArray *languages = nil;
     NSArray *extentions = nil;
     if ([extArray count] > 2) {
-        disposition = [extArray objectAtIndex:1];
-        languages = [extArray objectAtIndex:2];
+        disposition = [self nullToNil:[extArray objectAtIndex:1]];
+        languages = [self nullToNil:[extArray objectAtIndex:2]];
     }
     if ([extArray count] > 3) {
-        extentions = [extArray objectAtIndex:3];
+        extentions = [self nullToNil:[extArray objectAtIndex:3]];
     }
     return [[[BodyTypeMultipart alloc] initWithMediaType:mType subtype:mSubType parts:parts param:param disposition:disposition languages:languages extentions:extentions] autorelease];
 }
@@ -985,6 +993,7 @@
     }
     [self match:T_SPACE];
     NSString *data = [self nString];
+    if (!data) return nil;
     return [NSDictionary dictionaryWithObjects:[NSArray arrayWithObject:data] forKeys:[NSArray arrayWithObject:aName]];
 }
 
@@ -1004,7 +1013,7 @@
 
 - (NSDictionary *) msgAtt {
     [self match:T_LPAR];
-    NSDictionary *attr = nil;
+    NSMutableDictionary *attr = [NSMutableDictionary dictionary];
     BOOL goOn = YES;
     while (goOn) {
         Token *aToken = [self lookahead];
@@ -1021,7 +1030,7 @@
             }
         }
         if (goOn) {
-            NSError *error = NULL;
+            NSError *error = nil;
             NSRegularExpression *envelopeRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:ENVELOPE)\\z"
                                                                                            options:NSRegularExpressionCaseInsensitive
                                                                                              error:&error];
@@ -1043,25 +1052,25 @@
             NSRegularExpression *uidRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:UID)\\z"
                                                                                       options:NSRegularExpressionCaseInsensitive
                                                                                         error:&error];
-            NSRegularExpression *threadIdRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:X-GM-THRID)\\z"
+            NSRegularExpression *threadIdRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:X-GM-THRID|X-GM-MSGID)\\z"
                                                                                            options:NSRegularExpressionCaseInsensitive
                                                                                              error:&error];
             if ([envelopeRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
-                attr = [self envelopeData];
+                [attr addEntriesFromDictionary:[self envelopeData]];
             } else if ([flagsRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
-                attr = [self flagsData];
+                [attr addEntriesFromDictionary:[self flagsData]];
             } else if ([internalDateRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
-                attr = [self internalDateData];
+                [attr addEntriesFromDictionary:[self internalDateData]];
             } else if ([rfc822TextRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
-                attr = [self rfc822Text];
+                [attr addEntriesFromDictionary:[self rfc822Text]];
             } else if ([rfc822SizeRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
-                attr = [self rfc822Size];
+                [attr addEntriesFromDictionary:[self rfc822Size]];
             } else if ([bodyRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
-                attr = [self bodyData];
+                [attr addEntriesFromDictionary:[self bodyData]];
             } else if ([uidRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
-                attr = [self uidData];
+                [attr addEntriesFromDictionary:[self uidData]];
             } else if ([threadIdRegex numberOfMatchesInString:aToken.value options:0 range:NSMakeRange(0, [aToken.value length])]) {
-                attr = [self threadIdData];
+                [attr addEntriesFromDictionary:[self threadIdData]];
             } else {
                 [self parseError:[NSString stringWithFormat:@"unknown attribute %@", aToken.value]];
             }
@@ -1314,6 +1323,7 @@
                     rootMember = newMember;
                 } else {
                     [lastMember.children addObject:newMember];
+                    [newMember release];
                 }
                 lastMember = newMember;
                 break;
@@ -1459,7 +1469,7 @@
     if (aToken.symbol == T_NUMBER) {
         return [self numericResponse];
     } else if (aToken.symbol == T_ATOM) {
-        NSError *error = NULL;
+        NSError *error = nil;
         NSRegularExpression *condRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:OK|NO|BAD|BYE|PREAUTH)\\z"
                                                                                    options:NSRegularExpressionCaseInsensitive error:&error];
         NSRegularExpression *flagsRegex = [NSRegularExpression regularExpressionWithPattern:@"\\A(?:FLAGS)\\z"
@@ -1554,7 +1564,7 @@
 }
 
 - (Token *) tokenForBeg {
-    NSError *error = NULL;
+    NSError *error = nil;
     NSRegularExpression *begRegex = [NSRegularExpression regularExpressionWithPattern:@"\\G(?:( +)|(NIL)(?=[\\x80-\\xff(){ \\x00-\\x1f\\x7f%*\"\\\\\\[\\]+])|(\\d+)(?=[\\x80-\\xff(){ \\x00-\\x1f\\x7f%*\"\\\\\\[\\]+])|([^\\x80-\\xff(){ \\x00-\\x1f\\x7f%*\"\\\\\\[\\]+]+)|\"((?:[^\\x00\\r\\n\"\\\\]|\\\\[\"\\\\])*)\"|(\\()|(\\))|(\\\\)|(\\*)|(\\[)|(\\])|\\{(\\d+)\\}\\r\\n|(\\+)|(%)|(\\r\\n)|(\\z))"
                                                                               options:NSRegularExpressionCaseInsensitive
                                                                                 error:&error];
@@ -1735,7 +1745,7 @@
 }
 
 - (Token *) tokenForData {
-    NSError *error = NULL;
+    NSError *error = nil;
     NSRegularExpression *dataRegex = [NSRegularExpression regularExpressionWithPattern:@"\\G(?:( )|(NIL)|(\\d+)|\"((?:[^\\x00\\r\\n\"\\\\]|\\\\[\"\\\\])*)\"|\\{(\\d+)\\}\\r\\n|(\\()|(\\)))"
                                                                                options:NSRegularExpressionCaseInsensitive
                                                                                  error:&error];
@@ -1835,7 +1845,7 @@
 }
 
 - (Token *) tokenForText {
-    NSError *error = NULL;
+    NSError *error = nil;
     NSRegularExpression *textRegex = [NSRegularExpression regularExpressionWithPattern:@"\\G(?:([^\\x00\\r\\n]*))"
                                                                                options:NSRegularExpressionCaseInsensitive
                                                                                  error:&error];
@@ -1871,7 +1881,7 @@
 }
 
 - (Token *) tokenForRText {
-    NSError *error = NULL;
+    NSError *error = nil;
     NSRegularExpression *rTextRegex = [NSRegularExpression regularExpressionWithPattern:@"\\G(?:(\\[)|([^\\x00\\r\\n]*))"
                                                                                 options:NSRegularExpressionCaseInsensitive
                                                                                   error:&error];
@@ -1916,7 +1926,7 @@
 }
 
 - (Token *) tokenForCText {
-    NSError *error = NULL;
+    NSError *error = nil;
     NSRegularExpression *cTextRegex = [NSRegularExpression regularExpressionWithPattern:@"\\G(?:([^\\x00\\r\\n\\]]*))"
                                                                                 options:NSRegularExpressionCaseInsensitive
                                                                                   error:&error];

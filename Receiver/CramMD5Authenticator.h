@@ -10,10 +10,10 @@
 #import "NSString+Additions.h"
 
 @interface CramMD5Authenticator : NSObject {
-
+    
     NSString *user;
     NSString *password;
-
+    
 }
 
 @property (copy) NSString *user;

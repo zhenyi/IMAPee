@@ -13,4 +13,10 @@
 @synthesize name;
 @synthesize data;
 
+- (void) dealloc {
+    [name release];
+    [data release];
+    [super dealloc];
+}
+
 @end

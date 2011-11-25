@@ -13,4 +13,10 @@
 @synthesize code;
 @synthesize text;
 
+- (void) dealloc {
+    [code release];
+    [text release];
+    [super dealloc];
+}
+
 @end

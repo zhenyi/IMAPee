@@ -19,6 +19,11 @@
     return self;
 }
 
+- (void) dealloc {
+    [data release];
+    [super dealloc];
+}
+
 - (NSString *) formatInternal:(id)aData {
     if ([aData isKindOfClass:[NSString class]]) {
         return aData;

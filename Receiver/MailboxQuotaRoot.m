@@ -13,4 +13,10 @@
 @synthesize mailbox;
 @synthesize quotaRoots;
 
+- (void) dealloc {
+    [mailbox release];
+    [quotaRoots release];
+    [super dealloc];
+}
+
 @end

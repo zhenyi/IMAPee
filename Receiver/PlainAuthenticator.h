@@ -10,10 +10,10 @@
 
 
 @interface PlainAuthenticator : NSObject {
-
+    
     NSString *user;
     NSString *password;
-
+    
 }
 
 @property (copy) NSString *user;

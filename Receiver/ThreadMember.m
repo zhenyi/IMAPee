@@ -13,4 +13,9 @@
 @synthesize seqno;
 @synthesize children;
 
+- (void) dealloc {
+    [children release];
+    [super dealloc];
+}
+
 @end

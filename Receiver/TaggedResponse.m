@@ -15,4 +15,12 @@
 @synthesize data;
 @synthesize rawData;
 
+- (void) dealloc {
+    [tag release];
+    [name release];
+    [data release];
+    [rawData release];
+    [super dealloc];
+}
+
 @end
